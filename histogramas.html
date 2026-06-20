@@ -3,36 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Práctica 02: Histogramas y Ecualización - Visión Artificial</title>
+    <title>Práctica Interactiva: Histogramas y Ecualización - OpenCV & Python</title>
     
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS para diseño moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- MathJax para fórmulas matemáticas LaTeX -->
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <!-- MathJax para fórmulas matemáticas LaTeX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
     <style>
-        :root {
-            --bg-base: #0f172a;
-            --bg-panel: #1e293b;
-            --accent-cyan: #06b6d4;
-            --accent-purple: #8b5cf6;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
         body {
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
         }
-
-        /* Estilos para el scrollbar tipo IDE */
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar para IDE feel */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-base); }
+        ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
@@ -47,7 +44,7 @@
             height: 16px;
             width: 16px;
             border-radius: 50%;
-            background: var(--accent-cyan);
+            background: #06b6d4; /* cyan-500 */
             cursor: pointer;
             margin-top: -6px;
             box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
@@ -59,23 +56,15 @@
             background: #334155;
             border-radius: 2px;
         }
-
-        .math-box {
-            overflow-x: auto;
-            padding: 1rem;
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 0.5rem;
-            border: 1px solid #334155;
-        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="text-slate-100 min-h-screen flex flex-col">
 
-    <!-- Navegación -->
+    <!-- Navegación Superior -->
     <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <a href="index.html" class="text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-2 font-medium">
+                <a href="../index.html" class="text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-2 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Panel Principal
                 </a>
                 <div class="h-4 w-px bg-slate-700"></div>
@@ -88,227 +77,280 @@
         </div>
     </nav>
 
-    <!-- Contenido Principal -->
-    <main class="flex-grow max-w-7xl mx-auto px-6 py-8 w-full space-y-12">
-        
-        <!-- Cabecera -->
-        <header class="space-y-4">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold uppercase tracking-wider">
-                <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
-                Procesamiento Espacial
-            </div>
-            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
-                Histogramas y <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">Ecualización</span>
-            </h1>
-            <p class="text-lg text-slate-400 max-w-3xl leading-relaxed">
-                El análisis de histogramas permite comprender la distribución lumínica de una imagen. 
-                Mediante técnicas de ecualización en OpenCV, podemos mejorar drásticamente el contraste para facilitar la extracción de características.
-            </p>
-        </header>
-
-        <!-- SECCIÓN 1: TEORÍA -->
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1 space-y-6">
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 h-full shadow-lg">
-                    <h2 class="text-xl font-bold text-white flex items-center gap-2 mb-4">
-                        <i data-lucide="library" class="w-5 h-5 text-purple-400"></i>
-                        Referencia OpenCV
-                    </h2>
-                    <p class="text-sm text-slate-400 mb-6">Funciones principales utilizadas en Python para el procesamiento de histogramas.</p>
-                    
-                    <div class="space-y-4">
-                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                            <code class="text-xs text-cyan-300 font-mono">cv2.calcHist(images, channels, mask, histSize, ranges)</code>
-                            <p class="text-xs text-slate-500 mt-2">Calcula el histograma de un conjunto de arrays/imágenes.</p>
-                        </div>
-                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                            <code class="text-xs text-purple-300 font-mono">cv2.equalizeHist(src)</code>
-                            <p class="text-xs text-slate-500 mt-2">Normaliza el brillo y aumenta el contraste global de la imagen.</p>
-                        </div>
-                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                            <code class="text-xs text-pink-300 font-mono">cv2.createCLAHE([, clipLimit[, tileGridSize]])</code>
-                            <p class="text-xs text-slate-500 mt-2">Crea un objeto para la ecualización adaptativa limitada por contraste.</p>
-                        </div>
-                    </div>
+    <!-- HEADER / BARRA DE PESTAÑAS -->
+    <header class="border-b border-slate-800 bg-slate-950 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-cyan-600/20 text-cyan-400 rounded-lg border border-cyan-500/30">
+                    <i data-lucide="bar-chart-2" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Guía de Visión Artificial <span class="text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono">OpCV-102</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Práctica de Laboratorio: Histogramas y Ecualización</p>
                 </div>
             </div>
+            <div class="flex gap-2">
+                <button onclick="switchTab('teoria')" id="tab-teoria" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition">
+                    <i class="fa-solid fa-book mr-2"></i>Guía & Teoría
+                </button>
+                <button onclick="switchTab('simulador')" id="tab-simulador" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-sliders mr-2"></i>Simulador OpenCV
+                </button>
+                <button onclick="switchTab('desafios')" id="tab-desafios" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-trophy mr-2"></i>Desafíos
+                </button>
+            </div>
+        </div>
+    </header>
 
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Concepto -->
-                <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
-                    <h3 class="text-lg font-bold text-cyan-400 mb-3 flex items-center gap-2">
-                        <i data-lucide="function-square" class="w-5 h-5"></i>
-                        El Histograma de una Imagen
-                    </h3>
-                    <p class="text-sm text-slate-300 leading-relaxed mb-4">
-                        Un histograma es una representación gráfica de la distribución de las intensidades de los píxeles. 
-                        En una imagen en escala de grises de 8 bits (valores de $0$ a $255$), nos indica cuántos píxeles existen para cada nivel de gris.
-                        Se define como la función discreta:
+    <!-- NOTIFICACIÓN FLOTANTE (TOAST) -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toast-msg">¡Código copiado al portapapeles!</span>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 1: GUÍA & TEORÍA                   -->
+        <!-- ========================================== -->
+        <section id="sec-teoria" class="space-y-8">
+            <div class="bg-gradient-to-r from-cyan-900/30 via-slate-900 to-slate-900 border border-cyan-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-cyan-400 font-mono text-xs uppercase tracking-widest font-semibold">Procesamiento en Dominio Espacial</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Análisis de Histogramas y Contraste</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                        El histograma es la "firma estadística" de la iluminación de una imagen. En visión artificial industrial, se utiliza para diagnosticar la exposición de la cámara, segmentar objetos mediante umbrales y mejorar drásticamente el contraste a través de técnicas de 
+                        <strong class="text-white">ecualización global</strong> o 
+                        <strong class="text-white">ecualización adaptativa (CLAHE)</strong>.
                     </p>
-                    <div class="math-box text-center">
-                        $$h(r_k) = n_k$$
+                    <div class="mt-6 flex flex-wrap gap-4 text-xs font-mono text-slate-400">
+                        <span class="flex items-center gap-1.5"><i class="fa-brands fa-python text-yellow-500"></i> Python 3.x</span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-circle-nodes text-blue-400"></i> cv2.calcHist</span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-chart-simple text-emerald-400"></i> cv2.equalizeHist</span>
                     </div>
-                    <p class="text-sm text-slate-400 mt-3">Donde $r_k$ es el nivel de intensidad $k$-ésimo y $n_k$ es la cantidad de píxeles con esa intensidad.</p>
+                </div>
+            </div>
+
+            <!-- TARJETAS DE TEORÍA -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Tarjeta 1: Concepto -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-cyan-400 text-2xl mb-4"><i class="fa-solid fa-chart-column"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">1. El Histograma</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Es un gráfico de frecuencias que muestra cuántos píxeles existen para cada nivel de intensidad de luz (0 a 255). Matemáticamente:
+                        </p>
+                        <div class="bg-slate-900/50 p-2 rounded-lg border border-slate-800 mb-4 overflow-x-auto text-center text-sm">
+                            $$h(r_k) = n_k$$
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 mb-4 text-xs code-font text-slate-300 space-y-2">
+                            <p><span class="text-cyan-400"># Cálculo en OpenCV</span><br>hist = cv2.calcHist([img],[0],None,[256],[0,256])</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Ecualizaciones -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
-                        <h4 class="text-md font-bold text-white mb-2">Ecualización Global</h4>
-                        <p class="text-xs text-slate-400 leading-relaxed mb-4">
-                            Busca obtener un histograma plano (distribución uniforme). Utiliza la Función de Distribución Acumulada (CDF) de la imagen entera para mapear los valores de entrada a nuevos valores de salida.
+                <!-- Tarjeta 2: Ecualización Global -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-violet-400 text-2xl mb-4"><i class="fa-solid fa-bolt"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">2. Ecualización Global</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Mapea los valores de intensidad utilizando la <strong>Función de Distribución Acumulada (CDF)</strong> de toda la imagen para intentar "aplanar" el histograma y estirar el contraste.
                         </p>
-                        <div class="math-box text-xs">
+                        <div class="bg-slate-900/50 p-2 rounded-lg border border-slate-800 mb-4 overflow-x-auto text-center text-xs">
                             $$s_k = T(r_k) = (L-1) \sum_{j=0}^{k} p_r(r_j)$$
                         </div>
-                        <p class="text-xs text-rose-400 mt-3 font-medium">Desventaja: Puede sobreexponer áreas si la imagen tiene variaciones extremas de luz.</p>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 mb-4 text-xs code-font text-slate-300 space-y-2">
+                            <p><span class="text-violet-400"># Mejora global de contraste</span><br>img_eq = cv2.equalizeHist(img)</p>
+                        </div>
                     </div>
+                </div>
 
-                    <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
-                        <h4 class="text-md font-bold text-white mb-2">CLAHE (Ecualización Adaptativa)</h4>
-                        <p class="text-xs text-slate-400 leading-relaxed mb-4">
-                            <em>Contrast Limited Adaptive Histogram Equalization</em>. Divide la imagen en bloques (tiles) y ecualiza cada uno por separado. Para evitar amplificar ruido, recorta el histograma en un límite (Clip Limit) y redistribuye los píxeles recortados.
+                <!-- Tarjeta 3: CLAHE -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-amber-400 text-2xl mb-4"><i class="fa-solid fa-chess-board"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">3. CLAHE (Adaptativa)</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            <em>Contrast Limited Adaptive Histogram Equalization</em>. Divide la imagen en bloques (tiles) para evitar sobreexposición local y recorta el ruido con un límite <code class="text-amber-300">clipLimit</code>.
                         </p>
-                        <ul class="text-xs text-slate-400 list-disc list-inside space-y-1">
-                            <li><strong>Clip Limit:</strong> Umbral de recorte para evitar ruido.</li>
-                            <li><strong>Tile Grid Size:</strong> Tamaño de la matriz divisoria (ej. 8x8).</li>
-                            <li><strong>Interpolación:</strong> Une los bloques mediante interpolación bilineal para evitar bordes marcados.</li>
-                        </ul>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 mb-4 text-xs code-font text-slate-300 space-y-2 mt-4">
+                            <p><span class="text-amber-400"># Configuración adaptativa</span><br>clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))<br>img_cl = clahe.apply(img)</p>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- CÓDIGO INICIAL PYTHON -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fa-brands fa-python text-yellow-500 text-xl"></i>
+                    <h3 class="text-lg font-semibold text-white">Código de Inicialización y Gráficas</h3>
+                </div>
+                <p class="text-sm text-slate-300 mb-4">
+                    En Python, se utiliza <code class="text-cyan-400 font-mono bg-slate-900 px-1.5 py-0.5 rounded">matplotlib</code> para renderizar la gráfica del histograma calculada por OpenCV. Copia este script base:
+                </p>
+                <div class="relative group">
+                    <button onclick="copyCode('init-python-code')" class="absolute top-3 right-3 bg-slate-800 hover:bg-slate-700 text-xs px-2.5 py-1.5 rounded text-slate-300 border border-slate-700 transition flex items-center gap-1">
+                        <i class="fa-solid fa-copy"></i> Copiar
+                    </button>
+                    <pre id="init-python-code" class="text-xs md:text-sm bg-slate-900 p-4 rounded-xl border border-slate-800 text-slate-300 overflow-x-auto code-font">
+<span class="text-slate-500"># -*- coding: utf-8 -*-</span>
+<span class="text-purple-400">import</span> cv2
+<span class="text-purple-400">import</span> numpy <span class="text-purple-400">as</span> np
+<span class="text-purple-400">from</span> matplotlib <span class="text-purple-400">import</span> pyplot <span class="text-purple-400">as</span> plt
+
+<span class="text-slate-500"># 1. Cargar imagen en escala de grises</span>
+img = cv2.imread(<span class="text-emerald-400">'radiografia_industrial.jpg'</span>, cv2.IMREAD_GRAYSCALE)
+
+<span class="text-slate-500"># 2. Aplicar CLAHE (Recomendado para imágenes con mucho ruido)</span>
+clahe = cv2.createCLAHE(clipLimit=<span class="text-amber-400">2.0</span>, tileGridSize=(<span class="text-amber-400">8</span>,<span class="text-amber-400">8</span>))
+resultado = clahe.apply(img)
+
+<span class="text-slate-500"># 3. Calcular histograma del resultado</span>
+hist = cv2.calcHist([resultado], [<span class="text-amber-400">0</span>], <span class="text-purple-400">None</span>, [<span class="text-amber-400">256</span>], [<span class="text-amber-400">0</span>, <span class="text-amber-400">256</span>])
+
+<span class="text-slate-500"># 4. Mostrar resultados visuales y gráficos</span>
+cv2.imshow(<span class="text-emerald-400">'Original vs Procesada'</span>, np.hstack((img, resultado)))
+
+plt.plot(hist, color=<span class="text-emerald-400">'gray'</span>)
+plt.title(<span class="text-emerald-400">'Histograma CLAHE'</span>)
+plt.xlim([<span class="text-amber-400">0</span>, <span class="text-amber-400">256</span>])
+plt.show()
+
+cv2.waitKey(<span class="text-amber-400">0</span>)
+cv2.destroyAllWindows()</pre>
                 </div>
             </div>
         </section>
 
-        <!-- SECCIÓN 2: SIMULADOR (SANDBOX) -->
-        <section class="space-y-6 pt-8 border-t border-slate-800">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-                <div>
-                    <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-                        <i data-lucide="cpu" class="w-6 h-6 text-cyan-400"></i>
-                        Simulador OpenCV en Tiempo Real
-                    </h2>
-                    <p class="text-sm text-slate-400 mt-1">Experimenta modificando el código Python simulado. El procesamiento digital se realiza en el navegador usando Canvas API.</p>
-                </div>
-                
-                <div class="flex flex-col gap-1 w-full md:w-64">
-                    <label class="text-xs font-bold text-slate-500 uppercase">Imagen de Entrada (Array NumPy)</label>
-                    <select id="selImage" onchange="generarImagenPrueba(); ejecutarPipeline();" class="bg-slate-900 border border-slate-700 text-sm text-white rounded-lg p-2.5 focus:ring-2 focus:ring-cyan-500 outline-none w-full">
-                        <option value="low">Bajo Contraste (Neblina)</option>
-                        <option value="dark">Subexpuesta (Poca luz)</option>
-                        <option value="bright">Sobreexpuesta (Mucha luz)</option>
-                        <option value="mixed">Iluminación Mixta (Sombra/Luz)</option>
-                    </select>
-                </div>
-            </div>
-
+        <!-- ========================================== -->
+        <!-- SECCIÓN 2: SIMULADOR INTERACTIVO           -->
+        <!-- ========================================== -->
+        <section id="sec-simulador" class="hidden space-y-6">
+            
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                
-                <!-- Editor de Código (Izquierda) -->
-                <div class="lg:col-span-5 bg-[#0d1117] border border-slate-800 rounded-xl flex flex-col shadow-2xl overflow-hidden">
-                    <div class="bg-[#161b22] px-4 py-2 border-b border-slate-800 flex justify-between items-center">
-                        <div class="flex gap-2">
-                            <div class="w-3 h-3 rounded-full bg-rose-500/80"></div>
-                            <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
-                            <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+                <!-- CONTROLES (IZQUIERDA) -->
+                <div class="lg:col-span-4 bg-slate-950 border border-slate-800 p-6 rounded-xl space-y-6">
+                    <div class="border-b border-slate-800 pb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-cyan-400"></i> Pipeline de Proceso
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">Configura el entorno virtual para procesar las imágenes en tiempo real.</p>
+                    </div>
+
+                    <!-- SELECCIÓN DE IMAGEN -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Imagen de Entrada</label>
+                        <select id="selImage" onchange="initSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                            <option value="low">Bajo Contraste (Neblina)</option>
+                            <option value="dark">Subexpuesta (Poca luz)</option>
+                            <option value="bright">Sobreexpuesta (Saturada)</option>
+                            <option value="mixed">Iluminación Mixta (Sombras/Luces)</option>
+                        </select>
+                    </div>
+
+                    <!-- SELECTOR DE OPERACIONES (MÉTODO) -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Método de Ecualización</label>
+                        <select id="selMethod" onchange="updateUIControls()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                            <option value="none" selected>Ninguno (Original)</option>
+                            <option value="global">cv2.equalizeHist() (Global)</option>
+                            <option value="clahe">cv2.createCLAHE() (Adaptativo)</option>
+                        </select>
+                    </div>
+
+                    <!-- CONTROLES DINÁMICOS (SÓLO PARA CLAHE) -->
+                    <div id="claheParams" class="border-t border-slate-800 pt-4 space-y-4 hidden">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Parámetros CLAHE</h4>
                         </div>
-                        <span class="text-xs font-mono text-slate-400">vision_script.py</span>
+
+                        <!-- Slider ClipLimit -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-slate-400">clipLimit (Recorte):</span>
+                                <span id="valClip" class="text-cyan-400">2.0</span>
+                            </div>
+                            <input type="range" id="rngClip" min="1" max="10" step="0.5" value="2.0" oninput="updateUIControls()" class="w-full accent-cyan-500 bg-slate-800 rounded-lg appearance-none h-1.5 cursor-pointer">
+                        </div>
+
+                        <!-- Slider GridSize -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-slate-400">tileGridSize (Matriz N x N):</span>
+                                <span id="valGrid" class="text-cyan-400">8</span>
+                            </div>
+                            <input type="range" id="rngGrid" min="2" max="16" step="2" value="8" oninput="updateUIControls()" class="w-full accent-cyan-500 bg-slate-800 rounded-lg appearance-none h-1.5 cursor-pointer">
+                        </div>
                     </div>
                     
-                    <div class="p-5 font-mono text-sm leading-relaxed text-slate-300 flex-grow relative">
-                        <!-- Líneas de código base -->
-                        <div><span class="text-rose-400">import</span> cv2</div>
-                        <div><span class="text-rose-400">import</span> numpy <span class="text-rose-400">as</span> np</div>
-                        <div class="mt-4 text-slate-500"># Cargar imagen en escala de grises</div>
-                        <div>img = cv2.imread(<span class="text-amber-300">'imagen.jpg'</span>, <span class="text-cyan-300">0</span>)</div>
-                        
-                        <!-- Controles interactivos integrados en el código -->
-                        <div class="mt-4 text-slate-500"># Seleccionar método de procesamiento</div>
-                        <div class="flex items-center gap-2 mt-1 mb-2 bg-slate-900/50 p-2 rounded border border-slate-800">
-                            <span class="text-purple-400">method</span> = 
-                            <select id="selMethod" onchange="actualizarInterfazCodigo(); ejecutarPipeline();" class="bg-[#0d1117] border border-slate-700 text-cyan-300 text-xs rounded px-2 py-1 outline-none font-mono">
-                                <option value="none">'ORIGINAL'</option>
-                                <option value="global">'GLOBAL_EQ'</option>
-                                <option value="clahe">'CLAHE'</option>
-                            </select>
-                        </div>
-
-                        <!-- Bloque dinámico de código -->
-                        <div id="codeBlock" class="min-h-[100px] transition-all">
-                            <!-- Se llena por JS -->
-                        </div>
-
-                        <!-- Parámetros CLAHE (Solo visibles si se selecciona CLAHE) -->
-                        <div id="claheParams" class="hidden mt-4 bg-slate-900/80 p-4 rounded-lg border border-slate-700 space-y-4">
-                            <div class="text-xs font-bold text-slate-500 uppercase mb-2">Ajuste de Parámetros</div>
-                            
-                            <div>
-                                <div class="flex justify-between text-xs mb-1">
-                                    <span class="text-slate-300 font-mono">clipLimit</span>
-                                    <span id="valClip" class="text-cyan-400 font-bold">2.0</span>
-                                </div>
-                                <input type="range" id="rngClip" min="1" max="10" step="0.5" value="2.0" oninput="actualizarValoresUI(); ejecutarPipeline();">
+                    <!-- ESTADÍSTICAS -->
+                    <div class="border-t border-slate-800 pt-4">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">Métricas del Resultado</h4>
+                        <div class="grid grid-cols-2 gap-2 text-center">
+                            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                                <p class="text-[10px] text-slate-500 uppercase">Media (Brillo)</p>
+                                <p id="statMean" class="text-sm font-mono font-bold text-white">0.0</p>
                             </div>
-                            
-                            <div>
-                                <div class="flex justify-between text-xs mb-1">
-                                    <span class="text-slate-300 font-mono">tileGridSize (N x N)</span>
-                                    <span id="valGrid" class="text-cyan-400 font-bold">8</span>
-                                </div>
-                                <input type="range" id="rngGrid" min="2" max="16" step="2" value="8" oninput="actualizarValoresUI(); ejecutarPipeline();">
+                            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+                                <p class="text-[10px] text-slate-500 uppercase">DevStd (Contraste)</p>
+                                <p id="statStdDev" class="text-sm font-mono font-bold text-cyan-400">0.0</p>
                             </div>
                         </div>
-
-                        <div class="mt-4 text-slate-500"># Mostrar resultado</div>
-                        <div>cv2.imshow(<span class="text-amber-300">'Output'</span>, result)</div>
                     </div>
                 </div>
 
-                <!-- Visualizadores (Derecha) -->
-                <div class="lg:col-span-7 flex flex-col gap-6">
+                <!-- CANVAS & CODIGO (DERECHA) -->
+                <div class="lg:col-span-8 flex flex-col gap-6">
                     
-                    <!-- Canvases -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
-                        <!-- Canvas Imagen -->
-                        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col">
-                            <div class="flex justify-between items-center mb-3">
-                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    <i data-lucide="image" class="w-4 h-4"></i> Output (img)
-                                </h4>
+                    <!-- PANEL DE PREVISUALIZACIÓN -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 md:p-6">
+                        <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4"><i class="fa-solid fa-camera-retro text-emerald-400 mr-2"></i>Visualización de Datos</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch justify-center">
+                            <!-- Imagen Entrada -->
+                            <div class="flex flex-col items-center bg-slate-900/50 p-2 rounded-lg border border-slate-800">
+                                <span class="text-xs font-mono text-slate-400 mb-2">Entrada (Source)</span>
+                                <canvas id="canvas-in" width="200" height="200" class="bg-black rounded border border-slate-700 w-full object-contain aspect-square"></canvas>
                             </div>
-                            <div class="flex-grow bg-black rounded-lg border border-slate-700 relative overflow-hidden flex items-center justify-center min-h-[200px]">
-                                <canvas id="cvsImage" width="256" height="256" class="w-full h-auto max-w-[256px] object-contain image-rendering-pixelated"></canvas>
-                            </div>
-                        </div>
 
-                        <!-- Canvas Histograma -->
-                        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col">
-                            <div class="flex justify-between items-center mb-3">
-                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    <i data-lucide="bar-chart" class="w-4 h-4"></i> cv2.calcHist()
-                                </h4>
+                            <!-- Imagen Salida -->
+                            <div class="flex flex-col items-center bg-slate-900/50 p-3 rounded-lg border-2 border-cyan-500/40 relative">
+                                <span class="text-xs font-mono text-cyan-400 font-bold mb-2">Salida Procesada</span>
+                                <canvas id="canvas-out" width="200" height="200" class="bg-black rounded border border-slate-700 w-full object-contain aspect-square"></canvas>
+                                <div class="absolute bottom-4 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
                             </div>
-                            <div class="flex-grow bg-[#0d1117] rounded-lg border border-slate-700 relative p-2 min-h-[200px]">
-                                <canvas id="cvsHist" width="256" height="150" class="w-full h-full"></canvas>
-                                <!-- Ejes -->
-                                <div class="absolute bottom-1 left-2 text-[10px] text-slate-500">0</div>
-                                <div class="absolute bottom-1 right-2 text-[10px] text-slate-500">255</div>
+
+                            <!-- Histograma -->
+                            <div class="flex flex-col items-center bg-slate-900/50 p-2 rounded-lg border border-slate-800">
+                                <span class="text-xs font-mono text-slate-400 mb-2">Histograma Salida</span>
+                                <div class="relative w-full aspect-square bg-[#0d1117] border border-slate-700 rounded p-1">
+                                    <canvas id="canvas-hist" width="200" height="200" class="w-full h-full"></canvas>
+                                    <div class="absolute bottom-0 left-1 text-[8px] text-slate-500">0</div>
+                                    <div class="absolute bottom-0 right-1 text-[8px] text-slate-500">255</div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Estadísticas Matemáticas -->
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 grid grid-cols-3 gap-4 divide-x divide-slate-800">
-                        <div class="text-center px-2">
-                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Media (Brillo)</p>
-                            <p id="statMean" class="text-lg font-mono font-bold text-white">0.00</p>
+                    <!-- GENERADOR DE CODIGO PYTHON -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-code text-cyan-400"></i> Script Generado
+                            </h3>
+                            <button onclick="copyCode('generated-code-pre')" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-copy"></i> Copiar Código
+                            </button>
                         </div>
-                        <div class="text-center px-2">
-                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Desviación (Contraste)</p>
-                            <p id="statStdDev" class="text-lg font-mono font-bold text-cyan-400">0.00</p>
-                        </div>
-                        <div class="text-center px-2">
-                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Entropía (Info)</p>
-                            <p id="statEntropy" class="text-lg font-mono font-bold text-purple-400">0.00</p>
+                        <div class="relative">
+                            <pre id="generated-code-pre" class="text-xs md:text-sm bg-slate-900 p-4 rounded-xl border border-slate-800 text-slate-300 overflow-x-auto code-font max-h-72"></pre>
                         </div>
                     </div>
 
@@ -316,435 +358,385 @@
             </div>
         </section>
 
-        <!-- SECCIÓN 3: DESAFÍOS -->
-        <section class="space-y-6 pt-8 border-t border-slate-800">
-            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-                <i data-lucide="check-circle" class="w-6 h-6 text-emerald-400"></i>
-                Comprobación de Conocimientos
-            </h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Pregunta 1 -->
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col">
-                    <h3 class="text-sm font-bold text-cyan-400 mb-2 uppercase tracking-wider">Desafío 1</h3>
-                    <p class="text-slate-300 text-sm mb-4 flex-grow">
-                        Al aplicar una **Ecualización Global** a una imagen que contiene un objeto oscuro sobre un fondo muy brillante, ¿qué problema principal suele presentarse?
+        <!-- ========================================== -->
+        <!-- SECCIÓN 3: DESAFÍOS MECTRÓNICOS            -->
+        <!-- ========================================== -->
+        <section id="sec-desafios" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-violet-900/30 via-slate-900 to-slate-900 border border-violet-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-violet-400 font-mono text-xs uppercase tracking-widest font-semibold">Evaluación Diagnóstica</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Retos de Análisis de Histogramas</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm">
+                        Selecciona la respuesta correcta basándote en la teoría y en tus observaciones del simulador. Esto validará tu comprensión de las técnicas de mejora de contraste espacial.
                     </p>
-                    <div class="space-y-2">
-                        <button onclick="verificarRespuesta(1, 'A')" id="btn1A" class="w-full text-left px-4 py-3 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm transition-colors text-slate-300">
-                            A) El fondo brillante se oscurece uniformemente, mejorando la imagen.
-                        </button>
-                        <button onclick="verificarRespuesta(1, 'B')" id="btn1B" class="w-full text-left px-4 py-3 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm transition-colors text-slate-300">
-                            B) El objeto oscuro se aclara demasiado y el fondo se satura perdiendo detalles locales (sobreexposición).
-                        </button>
-                        <button onclick="verificarRespuesta(1, 'C')" id="btn1C" class="w-full text-left px-4 py-3 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm transition-colors text-slate-300">
-                            C) El histograma resultante se divide en dos picos perfectos.
-                        </button>
+                </div>
+            </div>
+
+            <!-- RETOS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Reto 1 -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-2 py-0.5 rounded">Teoría Global</span>
+                            <i class="fa-solid fa-bolt text-slate-600 text-xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2">Problema de la Ecualización Global</h4>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Al aplicar <code class="text-xs text-purple-300">cv2.equalizeHist()</code> a una imagen que tiene un fondo casi blanco y un objeto central oscuro, ¿qué efecto colateral es el más probable?
+                        </p>
+                        
+                        <div class="space-y-2 mt-4">
+                            <button onclick="verificarRespuesta(1, 'A')" id="btn1A" class="w-full text-left px-4 py-3 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-sm transition text-slate-300">
+                                A) La imagen se vuelve perfecta y el fondo se oscurece.
+                            </button>
+                            <button onclick="verificarRespuesta(1, 'B')" id="btn1B" class="w-full text-left px-4 py-3 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-sm transition text-slate-300">
+                                B) Ocurre un efecto "washout" (sobreexposición extrema) y amplificación de ruido porque la CDF fuerza los valores medios hacia arriba.
+                            </button>
+                            <button onclick="verificarRespuesta(1, 'C')" id="btn1C" class="w-full text-left px-4 py-3 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-sm transition text-slate-300">
+                                C) El objeto oscuro desaparece y se vuelve negro puro.
+                            </button>
+                        </div>
+                        <div id="feedback1" class="mt-4 text-sm hidden p-3 rounded-lg bg-slate-950 border"></div>
                     </div>
-                    <div id="feedback1" class="mt-4 text-sm hidden p-3 rounded bg-slate-950 border"></div>
                 </div>
 
-                <!-- Pregunta 2 -->
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col">
-                    <h3 class="text-sm font-bold text-purple-400 mb-2 uppercase tracking-wider">Desafío 2</h3>
-                    <p class="text-slate-300 text-sm mb-4 flex-grow">
-                        En el algoritmo **CLAHE**, ¿qué función cumple el parámetro <code class="text-purple-300">clipLimit</code> y qué ocurre si le asignamos un valor excesivamente alto (ej. 40.0)?
-                    </p>
-                    <div class="space-y-2">
-                        <button onclick="verificarRespuesta(2, 'A')" id="btn2A" class="w-full text-left px-4 py-3 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm transition-colors text-slate-300">
-                            A) Limita la ecualización; un valor muy alto anula la limitación y el ruido de fondo se amplificará drásticamente.
-                        </button>
-                        <button onclick="verificarRespuesta(2, 'B')" id="btn2B" class="w-full text-left px-4 py-3 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm transition-colors text-slate-300">
-                            B) Define el tamaño del bloque; un valor alto hace que la imagen se vea pixelada.
-                        </button>
-                        <button onclick="verificarRespuesta(2, 'C')" id="btn2C" class="w-full text-left px-4 py-3 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm transition-colors text-slate-300">
-                            C) Recorta la imagen espacialmente, reduciendo su tamaño en píxeles.
-                        </button>
+                <!-- Reto 2 -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">Ajuste CLAHE</span>
+                            <i class="fa-solid fa-chess-board text-slate-600 text-xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2">Calibración Adaptativa</h4>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Si aumentas el parámetro <code class="text-xs text-amber-300">clipLimit</code> de CLAHE a su valor máximo posible, ¿A qué otro algoritmo se terminará pareciendo el resultado visual?
+                        </p>
+                        
+                        <div class="space-y-2 mt-4">
+                            <button onclick="verificarRespuesta(2, 'A')" id="btn2A" class="w-full text-left px-4 py-3 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-sm transition text-slate-300">
+                                A) A la ecualización de histograma Global (saturará los bordes y el ruido).
+                            </button>
+                            <button onclick="verificarRespuesta(2, 'B')" id="btn2B" class="w-full text-left px-4 py-3 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-sm transition text-slate-300">
+                                B) A la imagen original, ya que el límite alto anula el efecto matemático.
+                            </button>
+                            <button onclick="verificarRespuesta(2, 'C')" id="btn2C" class="w-full text-left px-4 py-3 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-sm transition text-slate-300">
+                                C) A una binarización extrema (blanco y negro puro).
+                            </button>
+                        </div>
+                        <div id="feedback2" class="mt-4 text-sm hidden p-3 rounded-lg bg-slate-950 border"></div>
                     </div>
-                    <div id="feedback2" class="mt-4 text-sm hidden p-3 rounded bg-slate-950 border"></div>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-slate-950 border-t border-slate-900 py-6 mt-8">
-        <div class="max-w-7xl mx-auto px-6 text-center text-slate-500 text-xs">
-            &copy; 2026 Laboratorio de Visión Artificial. Practicario Digital. Diseñado para fines académicos.
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 bg-slate-950 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p class="text-xs text-slate-400">Universidad Politécnica - Área de Mecatrónica y Visión por Computadora</p>
+            <p class="text-[10px] text-slate-600">Material educativo libre. Basado en documentación oficial de OpenCV.</p>
         </div>
     </footer>
 
-    <!-- LÓGICA JAVASCRIPT: Motor de Simulación OpenCV -->
+    <!-- LÓGICA DE CONTROL DEL SIMULADOR & RENDERING -->
     <script>
-        // Inicializar Iconos Lucide
+        // Inicialización de Lucide Icons
         lucide.createIcons();
 
-        // Variables Globales
-        const cvsImage = document.getElementById('cvsImage');
-        const ctxImage = cvsImage.getContext('2d', { willReadFrequently: true });
-        const cvsHist = document.getElementById('cvsHist');
-        const ctxHist = cvsHist.getContext('2d');
+        // Referencias a los Canvas
+        const canvasIn = document.getElementById('canvas-in');
+        const canvasOut = document.getElementById('canvas-out');
+        const canvasHist = document.getElementById('canvas-hist');
         
+        const ctxIn = canvasIn.getContext('2d', { willReadFrequently: true });
+        const ctxOut = canvasOut.getContext('2d');
+        const ctxHist = canvasHist.getContext('2d');
+
+        // Configuración de Simulador
         const IMG_SIZE = 256;
         let originalPixels = new Uint8Array(IMG_SIZE * IMG_SIZE);
 
-        // Al cargar la página
+        // Cambiar entre pestañas
+        function switchTab(tabName) {
+            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            if (activeBtn) {
+                if (tabName === 'teoria') activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition";
+                else if (tabName === 'simulador') activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition";
+                else if (tabName === 'desafios') activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-violet-600 text-white transition";
+            }
+
+            if (tabName === 'simulador') {
+                setTimeout(initSimulation, 50); // Dar tiempo a renderizar la UI
+            }
+        }
+
+        // Utilidades UI
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            toast.className = toast.className.replace('translate-y-20 opacity-0', 'translate-y-0 opacity-100');
+            setTimeout(() => {
+                toast.className = toast.className.replace('translate-y-0 opacity-100', 'translate-y-20 opacity-0');
+            }, 3000);
+        }
+
+        function copyCode(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('¡Código Python copiado!');
+            }).catch(err => {
+                // Fallback para iframes
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('¡Código Python copiado!');
+                } catch (err) {
+                    console.error('Error al copiar', err);
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // ==========================================
+        // LÓGICA CORE DE PROCESAMIENTO
+        // ==========================================
+
         window.onload = () => {
-            generarImagenPrueba();
-            actualizarInterfazCodigo();
-            ejecutarPipeline();
+            initSimulation();
         };
 
-        // Generador Procedural de Imágenes de Prueba (Escala de Grises)
-        function generarImagenPrueba() {
+        function initSimulation() {
             const type = document.getElementById('selImage').value;
-            let imgData = ctxImage.createImageData(IMG_SIZE, IMG_SIZE);
-            
+            generarImagen(type);
+            updateUIControls();
+        }
+
+        // Generación de matrices matemáticas simulando imágenes
+        function generarImagen(type) {
             for (let y = 0; y < IMG_SIZE; y++) {
                 for (let x = 0; x < IMG_SIZE; x++) {
                     let val = 0;
                     const idx = y * IMG_SIZE + x;
                     
-                    // Lógica para diferentes escenarios de iluminación
                     if (type === 'low') {
-                        // Neblina (valores concentrados en el centro 100-140)
                         val = 120 + Math.sin(x/10)*10 + Math.cos(y/10)*10 + (Math.random() * 10 - 5);
-                    } 
-                    else if (type === 'dark') {
-                        // Subexpuesta (valores concentrados a la izquierda 10-60)
+                    } else if (type === 'dark') {
                         let dist = Math.sqrt(Math.pow(x-128, 2) + Math.pow(y-128, 2));
                         val = 50 - (dist/5) + (Math.random() * 15);
                         val = Math.max(0, val);
-                    }
-                    else if (type === 'bright') {
-                        // Sobreexpuesta (valores a la derecha 200-250)
+                    } else if (type === 'bright') {
                         let grad = (x + y) / 2;
                         val = 180 + (grad / 4) + (Math.random() * 20);
                         val = Math.min(255, val);
-                    }
-                    else if (type === 'mixed') {
-                        // Mixta: Izquierda oscura, derecha clara, con un círculo en medio
+                    } else if (type === 'mixed') {
                         let dist = Math.sqrt(Math.pow(x-128, 2) + Math.pow(y-128, 2));
-                        let circle = dist < 50 ? 50 : 0; // Objeto intermedio
-                        
-                        if (x < 128) {
-                            val = 30 + Math.random()*15 + circle; // Sombra
-                        } else {
-                            val = 220 + Math.random()*15 - circle; // Luz fuerte
-                        }
+                        let circle = dist < 50 ? 50 : 0;
+                        if (x < 128) val = 30 + Math.random()*15 + circle;
+                        else val = 220 + Math.random()*15 - circle;
                     }
 
-                    // Guardar en array global
-                    val = Math.floor(Math.max(0, Math.min(255, val)));
-                    originalPixels[idx] = val;
+                    originalPixels[idx] = Math.floor(Math.max(0, Math.min(255, val)));
                 }
             }
+            renderCanvas(ctxIn, originalPixels);
         }
 
-        // Actualiza el texto del código Python en pantalla
-        function actualizarInterfazCodigo() {
+        function updateUIControls() {
             const method = document.getElementById('selMethod').value;
-            const codeBlock = document.getElementById('codeBlock');
             const claheParams = document.getElementById('claheParams');
-
-            if (method === 'none') {
-                claheParams.classList.add('hidden');
-                codeBlock.innerHTML = `
-                    <div><span class="text-slate-500"># Sin procesamiento aplicado</span></div>
-                    <div>result = img.copy()</div>
-                `;
-            } else if (method === 'global') {
-                claheParams.classList.add('hidden');
-                codeBlock.innerHTML = `
-                    <div><span class="text-slate-500"># Ecualización global de histograma</span></div>
-                    <div>result = cv2.equalizeHist(img)</div>
-                `;
-            } else if (method === 'clahe') {
-                claheParams.classList.remove('hidden');
-                actualizarValoresUI();
-            }
-        }
-
-        function actualizarValoresUI() {
-            const clip = parseFloat(document.getElementById('rngClip').value).toFixed(1);
-            const grid = document.getElementById('rngGrid').value;
+            const codePre = document.getElementById('generated-code-pre');
             
-            document.getElementById('valClip').innerText = clip;
-            document.getElementById('valGrid').innerText = `${grid}x${grid}`;
-
-            const codeBlock = document.getElementById('codeBlock');
-            codeBlock.innerHTML = `
-                <div><span class="text-slate-500"># Crear objeto CLAHE y aplicar</span></div>
-                <div>clahe = cv2.createCLAHE(clipLimit=<span class="text-cyan-300">${clip}</span>, tileGridSize=(<span class="text-cyan-300">${grid}</span>,<span class="text-cyan-300">${grid}</span>))</div>
-                <div>result = clahe.apply(img)</div>
-            `;
-        }
-
-        // ORQUESTADOR PRINCIPAL
-        function ejecutarPipeline() {
-            const method = document.getElementById('selMethod').value;
             let resultPixels = new Uint8Array(IMG_SIZE * IMG_SIZE);
+            let pythonCode = `import cv2\nimport numpy as np\n\nimg = cv2.imread('imagen.jpg', 0)\n\n`;
 
             if (method === 'none') {
+                claheParams.classList.add('hidden');
                 resultPixels.set(originalPixels);
-            } else if (method === 'global') {
-                resultPixels = aplicarEcualizacionGlobal(originalPixels);
-            } else if (method === 'clahe') {
+                pythonCode += `# Muestra original sin ecualizar\nresultado = img.copy()`;
+            } 
+            else if (method === 'global') {
+                claheParams.classList.add('hidden');
+                resultPixels = procesarGlobal(originalPixels);
+                pythonCode += `# Aplicación de Ecualización Global\nresultado = cv2.equalizeHist(img)`;
+            } 
+            else if (method === 'clahe') {
+                claheParams.classList.remove('hidden');
                 const clip = parseFloat(document.getElementById('rngClip').value);
                 const grid = parseInt(document.getElementById('rngGrid').value);
-                resultPixels = aplicarCLAHE_Avanzado(originalPixels, clip, grid);
+                
+                document.getElementById('valClip').innerText = clip.toFixed(1);
+                document.getElementById('valGrid').innerText = `${grid}x${grid}`;
+                
+                resultPixels = procesarCLAHE(originalPixels, clip, grid);
+                pythonCode += `# Configuración de CLAHE\nclahe = cv2.createCLAHE(clipLimit=${clip.toFixed(1)}, tileGridSize=(${grid},${grid}))\nresultado = clahe.apply(img)`;
             }
 
-            renderizarImagen(resultPixels);
-            calcularYRenderizarHistograma(resultPixels);
-            calcularEstadisticas(resultPixels);
+            codePre.innerText = pythonCode + `\n\ncv2.imshow('Salida', resultado)\ncv2.waitKey(0)`;
+            
+            renderCanvas(ctxOut, resultPixels);
+            dibujarHistograma(resultPixels);
+            calcularMetricas(resultPixels);
         }
 
-        // --- ALGORITMOS DE PROCESAMIENTO DIGITAL DE IMÁGENES ---
-
-        function aplicarEcualizacionGlobal(inputPixels) {
-            let output = new Uint8Array(inputPixels.length);
+        // Ecualización Global
+        function procesarGlobal(pixels) {
+            let out = new Uint8Array(pixels.length);
             let hist = new Int32Array(256);
+            for (let i = 0; i < pixels.length; i++) hist[pixels[i]]++;
             
-            // 1. Calcular Histograma
-            for (let i = 0; i < inputPixels.length; i++) hist[inputPixels[i]]++;
-
-            // 2. Calcular CDF (Distribución Acumulada)
             let cdf = new Int32Array(256);
             cdf[0] = hist[0];
             for (let i = 1; i < 256; i++) cdf[i] = cdf[i-1] + hist[i];
 
-            // 3. Buscar mínimo no cero
             let cdfMin = 0;
-            for (let i = 0; i < 256; i++) {
-                if (cdf[i] > 0) { cdfMin = cdf[i]; break; }
-            }
+            for (let i = 0; i < 256; i++) { if (cdf[i] > 0) { cdfMin = cdf[i]; break; } }
 
-            // 4. Mapeo / LUT
-            const total = inputPixels.length;
             let lut = new Uint8Array(256);
             for (let i = 0; i < 256; i++) {
-                lut[i] = Math.round(((cdf[i] - cdfMin) / (total - cdfMin)) * 255);
+                lut[i] = Math.round(((cdf[i] - cdfMin) / (pixels.length - cdfMin)) * 255);
             }
 
-            // 5. Aplicar LUT
-            for (let i = 0; i < inputPixels.length; i++) {
-                output[i] = lut[inputPixels[i]];
-            }
-            return output;
+            for (let i = 0; i < pixels.length; i++) out[i] = lut[pixels[i]];
+            return out;
         }
 
-        // Implementación de CLAHE (Contrast Limited Adaptive Histogram Equalization)
-        // Versión simplificada con interpolación básica para ejecución rápida en JS
-        function aplicarCLAHE_Avanzado(inputPixels, clipLimit, gridDim) {
-            let output = new Uint8Array(inputPixels.length);
-            
-            const tileW = Math.floor(IMG_SIZE / gridDim);
-            const tileH = Math.floor(IMG_SIZE / gridDim);
-            const tileArea = tileW * tileH;
-            
-            // Limite de recorte absoluto
-            const clipMax = Math.max(1, Math.round((clipLimit * tileArea) / 256));
+        // Simulación CLAHE JS (Simple block-based sin interpolación compleja para perf)
+        function procesarCLAHE(pixels, clipLimit, gridDim) {
+            let out = new Uint8Array(pixels.length);
+            const tSize = Math.floor(IMG_SIZE / gridDim);
+            const clipMax = Math.max(1, Math.round((clipLimit * (tSize*tSize)) / 256));
 
-            // Paso 1: Calcular LUT para cada Tile (Bloque)
-            // Guardaremos las LUTs en una matriz 2D (gridDim x gridDim) de arreglos 1D (256)
-            let luts = Array.from({length: gridDim}, () => 
-                Array.from({length: gridDim}, () => new Uint8Array(256))
-            );
+            let luts = Array.from({length: gridDim}, () => Array.from({length: gridDim}, () => new Uint8Array(256)));
 
             for (let ty = 0; ty < gridDim; ty++) {
                 for (let tx = 0; tx < gridDim; tx++) {
-                    
-                    // Histograma local
                     let hist = new Int32Array(256);
-                    let startY = ty * tileH;
-                    let startX = tx * tileW;
-
-                    for (let y = 0; y < tileH; y++) {
-                        let rowOffset = (startY + y) * IMG_SIZE;
-                        for (let x = 0; x < tileW; x++) {
-                            hist[inputPixels[rowOffset + (startX + x)]]++;
+                    for (let y = 0; y < tSize; y++) {
+                        for (let x = 0; x < tSize; x++) {
+                            hist[pixels[(ty*tSize + y)*IMG_SIZE + (tx*tSize + x)]]++;
                         }
                     }
 
-                    // Recorte (Clipping) y Redistribución
                     let excess = 0;
                     for (let i = 0; i < 256; i++) {
-                        if (hist[i] > clipMax) {
-                            excess += hist[i] - clipMax;
-                            hist[i] = clipMax;
-                        }
+                        if (hist[i] > clipMax) { excess += hist[i] - clipMax; hist[i] = clipMax; }
                     }
-                    
                     let distrib = Math.floor(excess / 256);
-                    let residual = excess % 256;
-                    
-                    for (let i = 0; i < 256; i++) {
-                        hist[i] += distrib;
-                    }
-                    // Repartir el residual de forma uniforme (simplificado a los primeros índices)
-                    for (let i = 0; i < residual; i++) hist[i]++;
+                    for (let i = 0; i < 256; i++) hist[i] += distrib;
 
-                    // CDF local
                     let cdf = new Int32Array(256);
                     cdf[0] = hist[0];
                     for (let i = 1; i < 256; i++) cdf[i] = cdf[i-1] + hist[i];
-
-                    // Crear LUT para este tile
-                    let cdfMin = cdf[0]; // Simplificación
+                    
+                    let cMin = cdf[0];
                     for (let i = 0; i < 256; i++) {
-                        luts[ty][tx][i] = Math.round(((cdf[i] - cdfMin) / (tileArea - cdfMin)) * 255);
+                        luts[ty][tx][i] = Math.round(((cdf[i] - cMin) / ((tSize*tSize) - cMin)) * 255);
                     }
                 }
             }
 
-            // Paso 2: Aplicar LUTs con Interpolación Bilineal (Simulación simplificada de suavizado de bordes)
-            // Para mantener el rendimiento en el navegador, hacemos una interpolación aproximada por cuadrante de pixel
             for (let y = 0; y < IMG_SIZE; y++) {
                 for (let x = 0; x < IMG_SIZE; x++) {
-                    
-                    let val = inputPixels[y * IMG_SIZE + x];
-                    
-                    // Encontrar en qué tile estamos
-                    let tx = Math.floor(x / tileW);
-                    let ty = Math.floor(y / tileH);
-                    
-                    // Para evitar bordes duros, en una implementación real de OpenCV se hace bilinear interpolation
-                    // con los 4 tiles adyacentes. Aquí aplicamos el LUT directo del tile por simplicidad de la demo,
-                    // pero añadimos un difuminado cruzado básico en las fronteras.
-                    
-                    let resultVal = luts[ty][tx][val];
-                    
-                    // Simulación muy básica de suavizado de bordes entre tiles
-                    if (x % tileW < 2 && tx > 0) resultVal = (resultVal + luts[ty][tx-1][val]) / 2;
-                    if (x % tileW > tileW-3 && tx < gridDim-1) resultVal = (resultVal + luts[ty][tx+1][val]) / 2;
-                    if (y % tileH < 2 && ty > 0) resultVal = (resultVal + luts[ty-1][tx][val]) / 2;
-                    if (y % tileH > tileH-3 && ty < gridDim-1) resultVal = (resultVal + luts[ty+1][tx][val]) / 2;
-
-                    output[y * IMG_SIZE + x] = resultVal;
+                    let val = pixels[y * IMG_SIZE + x];
+                    let tx = Math.min(gridDim-1, Math.floor(x / tSize));
+                    let ty = Math.min(gridDim-1, Math.floor(y / tSize));
+                    out[y * IMG_SIZE + x] = luts[ty][tx][val];
                 }
             }
-            return output;
+            return out;
         }
 
-        // --- RENDERIZADO Y GRÁFICAS ---
-
-        function renderizarImagen(pixels) {
-            let imgData = ctxImage.createImageData(IMG_SIZE, IMG_SIZE);
+        // Renderizado
+        function renderCanvas(ctx, pixels) {
+            let imgData = ctx.createImageData(IMG_SIZE, IMG_SIZE);
             for (let i = 0; i < pixels.length; i++) {
-                const p = i * 4;
-                const v = pixels[i];
-                imgData.data[p] = v;     // R
-                imgData.data[p+1] = v;   // G
-                imgData.data[p+2] = v;   // B
-                imgData.data[p+3] = 255; // A
+                imgData.data[i*4] = pixels[i];
+                imgData.data[i*4+1] = pixels[i];
+                imgData.data[i*4+2] = pixels[i];
+                imgData.data[i*4+3] = 255;
             }
-            ctxImage.putImageData(imgData, 0, 0);
+            ctx.putImageData(imgData, 0, 0);
         }
 
-        function calcularYRenderizarHistograma(pixels) {
+        function dibujarHistograma(pixels) {
             let hist = new Int32Array(256);
             for (let i = 0; i < pixels.length; i++) hist[pixels[i]]++;
-
-            // Normalizar para dibujar
             let maxVal = Math.max(...hist);
-            const w = cvsHist.width;
-            const h = cvsHist.height;
             
+            const w = canvasHist.width = 200;
+            const h = canvasHist.height = 200;
             ctxHist.clearRect(0, 0, w, h);
             
-            // Dibujar grid sutil
-            ctxHist.strokeStyle = '#1e293b';
-            ctxHist.lineWidth = 1;
-            ctxHist.beginPath();
-            for(let i=0; i<4; i++){
-                ctxHist.moveTo(0, h/4 * i); ctxHist.lineTo(w, h/4 * i);
-            }
-            ctxHist.stroke();
-
-            // Dibujar histograma
             const barW = w / 256;
-            ctxHist.fillStyle = '#06b6d4'; // Cyan
-
             for (let i = 0; i < 256; i++) {
-                let barH = (hist[i] / maxVal) * (h * 0.9); // 10% margen superior
-                // Gradiente para efecto visual
+                let barH = (hist[i] / maxVal) * (h * 0.9);
                 let grad = ctxHist.createLinearGradient(0, h, 0, h - barH);
-                grad.addColorStop(0, '#8b5cf6'); // Purple bottom
-                grad.addColorStop(1, '#06b6d4'); // Cyan top
-                
+                grad.addColorStop(0, '#0ea5e9'); // sky-500
+                grad.addColorStop(1, '#06b6d4'); // cyan-500
                 ctxHist.fillStyle = grad;
-                ctxHist.fillRect(i * barW, h - barH, barW + 0.5, barH); // +0.5 para evitar gaps
+                ctxHist.fillRect(i * barW, h - barH, barW + 0.5, barH);
             }
         }
 
-        function calcularEstadisticas(pixels) {
+        function calcularMetricas(pixels) {
             const n = pixels.length;
             let sum = 0;
             for(let i=0; i<n; i++) sum += pixels[i];
-            
-            // Media
             let mean = sum / n;
             
-            // Desviación estándar
             let sqSum = 0;
-            let hist = new Int32Array(256);
-            for(let i=0; i<n; i++) {
-                sqSum += Math.pow(pixels[i] - mean, 2);
-                hist[pixels[i]]++;
-            }
+            for(let i=0; i<n; i++) sqSum += Math.pow(pixels[i] - mean, 2);
             let stdDev = Math.sqrt(sqSum / n);
             
-            // Entropía
-            let entropy = 0;
-            for(let i=0; i<256; i++) {
-                if (hist[i] > 0) {
-                    let p = hist[i] / n;
-                    entropy -= p * Math.log2(p);
-                }
-            }
-
-            document.getElementById('statMean').innerText = mean.toFixed(2);
-            document.getElementById('statStdDev').innerText = stdDev.toFixed(2);
-            document.getElementById('statEntropy').innerText = entropy.toFixed(2);
+            document.getElementById('statMean').innerText = mean.toFixed(1);
+            document.getElementById('statStdDev').innerText = stdDev.toFixed(1);
         }
 
-        // --- LÓGICA DE LOS DESAFÍOS ---
-
+        // Verificador de Desafíos
         function verificarRespuesta(pregunta, opcion) {
             const feed = document.getElementById(`feedback${pregunta}`);
             feed.classList.remove('hidden');
             
-            // Limpiar estilos anteriores
             ['A', 'B', 'C'].forEach(letra => {
                 let btn = document.getElementById(`btn${pregunta}${letra}`);
-                btn.classList.remove('bg-emerald-900/50', 'border-emerald-500', 'bg-rose-900/50', 'border-rose-500');
-                btn.classList.add('bg-slate-800', 'border-slate-700');
+                btn.classList.remove('bg-emerald-900/40', 'border-emerald-500', 'bg-rose-900/40', 'border-rose-500');
+                btn.classList.add('bg-slate-900', 'border-slate-700');
             });
 
             const btnSel = document.getElementById(`btn${pregunta}${opcion}`);
-            btnSel.classList.remove('bg-slate-800', 'border-slate-700');
+            btnSel.classList.remove('bg-slate-900', 'border-slate-700');
 
             if (pregunta === 1) {
                 if (opcion === 'B') {
-                    btnSel.classList.add('bg-emerald-900/50', 'border-emerald-500');
-                    feed.className = "mt-4 text-sm p-3 rounded bg-emerald-950/30 border border-emerald-500 text-emerald-400 block";
-                    feed.innerHTML = "<strong>¡Correcto!</strong> La ecualización global mapea el fondo brillante hacia el extremo superior y estira violentamente los valores intermedios, provocando sobreexposición extrema (washout) y amplificando el ruido en las zonas oscuras.";
+                    btnSel.classList.add('bg-emerald-900/40', 'border-emerald-500');
+                    feed.className = "mt-4 text-sm p-3 rounded-lg bg-emerald-950/50 border border-emerald-500/50 text-emerald-400 block";
+                    feed.innerHTML = "<strong>¡Excelente!</strong> La CDF sube extremadamente rápido al contar el fondo brillante. Esto hace que todo lo demás se empuje hacia arriba (washout), revelando ruido en los oscuros.";
                 } else {
-                    btnSel.classList.add('bg-rose-900/50', 'border-rose-500');
-                    feed.className = "mt-4 text-sm p-3 rounded bg-rose-950/30 border border-rose-500 text-rose-400 block";
-                    feed.innerHTML = "<strong>Incorrecto.</strong> Piensa en cómo la función de distribución acumulada (CDF) sumará una inmensa cantidad de píxeles del fondo brillante, empujando casi todos los valores hacia el color blanco.";
+                    btnSel.classList.add('bg-rose-900/40', 'border-rose-500');
+                    feed.className = "mt-4 text-sm p-3 rounded-lg bg-rose-950/50 border border-rose-500/50 text-rose-400 block";
+                    feed.innerHTML = "<strong>Incompleto.</strong> Revisa bien cómo funciona el agrupamiento de los valores de píxeles altos en la CDF global.";
                 }
             } else if (pregunta === 2) {
                 if (opcion === 'A') {
-                    btnSel.classList.add('bg-emerald-900/50', 'border-emerald-500');
-                    feed.className = "mt-4 text-sm p-3 rounded bg-emerald-950/30 border border-emerald-500 text-emerald-400 block";
-                    feed.innerHTML = "<strong>¡Correcto!</strong> <code>clipLimit</code> establece un umbral máximo para los picos del histograma local. Si lo subes demasiado, el comportamiento vuelve a ser similar al de una ecualización estándar agresiva, amplificando el ruido térmico del sensor.";
+                    btnSel.classList.add('bg-emerald-900/40', 'border-emerald-500');
+                    feed.className = "mt-4 text-sm p-3 rounded-lg bg-emerald-950/50 border border-emerald-500/50 text-emerald-400 block";
+                    feed.innerHTML = "<strong>¡Correcto!</strong> El clipLimit corta los picos del histograma local. Al ponerlo muy alto, permites picos enormes (como en global), anulando el beneficio de usar la técnica adaptativa para evitar el ruido.";
                 } else {
-                    btnSel.classList.add('bg-rose-900/50', 'border-rose-500');
-                    feed.className = "mt-4 text-sm p-3 rounded bg-rose-950/30 border border-rose-500 text-rose-400 block";
-                    feed.innerHTML = "<strong>Incorrecto.</strong> El tamaño del bloque se controla con <code>tileGridSize</code>, no con <code>clipLimit</code>, y tampoco recorta la imagen geométricamente, sino que recorta las barras del gráfico de frecuencias.";
+                    btnSel.classList.add('bg-rose-900/40', 'border-rose-500');
+                    feed.className = "mt-4 text-sm p-3 rounded-lg bg-rose-950/50 border border-rose-500/50 text-rose-400 block";
+                    feed.innerHTML = "<strong>Incorrecto.</strong> El clipLimit actúa sobre la frecuencia del histograma (eje Y), no afecta al tamaño físico de los bloques o la resolución de la imagen.";
                 }
             }
         }
