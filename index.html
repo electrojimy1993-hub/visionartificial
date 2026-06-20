@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemas de Visión Artificial - Practicario Digital</title>
+    <style>
+        /* Variables de Diseño */
+        :root {
+            --bg-principal: #0f172a;
+            --bg-tarjeta: #1e293b;
+            --texto-principal: #f8fafc;
+            --texto-secundario: #94a3b8;
+            --cyan-accent: #38bdf8;
+            --purple-accent: #a855f7;
+            --borde: #334155;
+        }
+
+        /* Estilos Globales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-principal);
+            color: var(--texto-principal);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Encabezado */
+        header {
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            padding: 3rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--borde);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, var(--cyan-accent), var(--purple-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--texto-secundario);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Contenedor Principal de Prácticas */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            width: 100%;
+        }
+
+        .grid-practicas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        /* Tarjetas de Prácticas */
+        .tarjeta {
+            background-color: var(--bg-tarjeta);
+            border: 1px solid var(--borde);
+            border-radius: 12px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tarjeta:hover {
+            transform: translateY(-5px);
+            border-color: var(--cyan-accent);
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.05);
+        }
+
+        .num-practica {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--cyan-accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .tarjeta h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .tarjeta p {
+            color: var(--texto-secundario);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Botones de Redirección */
+        .btn-practica {
+            background-color: transparent;
+            color: var(--texto-principal);
+            border: 1px solid var(--texto-secundario);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-practica:hover {
+            background-color: var(--cyan-accent);
+            color: var(--bg-principal);
+            border-color: var(--cyan-accent);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+        }
+
+        /* Pie de Página */
+        footer {
+            background-color: #0b0f19;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--texto-secundario);
+            border-top: 1px solid var(--borde);
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            header h1 { font-size: 2rem; }
+            main { padding: 2rem 1rem; }
+            .grid-practicas { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Sistemas de Visión Artificial</h1>
+        <p>Practicario Digital Interactivo — Accede a los módulos de procesamiento, análisis y reconocimiento de imágenes.</p>
+    </header>
+
+    <main>
+        <div class="grid-practicas">
+
+            <div class="tarjeta">
+                <div>
+                    <div class="num-practica">Práctica 01</div>
+                    <h2>Operaciones con Imágenes</h2>
+                    <p>Implementación de operaciones aritméticas, lógicas y transformaciones básicas sobre matrices de píxeles (brillo, contraste, inversión).</p>
+                </div>
+                <button class="btn-practica" onclick="navegarA('operaciones-imagenes')">Iniciar Módulo →</button>
+            </div>
+
+            <div class="tarjeta">
+                <div>
+                    <div class="num-practica">Práctica 02</div>
+                    <h2>Histogramas</h2>
+                    <p>Cálculo, visualización y ecualización de histogramas para el análisis de distribución de intensidades y mejora de imágenes.</p>
+                </div>
+                <button class="btn-practica" onclick="navegarA('histogramas')">Iniciar Módulo →</button>
+            </div>
+
+            <div class="tarjeta">
+                <div>
+                    <div class="num-practica">Práctica 03</div>
+                    <h2>Espacio de Color HSV</h2>
+                    <p>Conversión de modelos de color (RGB a HSV) y manipulación de canales de Matiz (Hue), Saturación y Valor para segmentación robusta.</p>
+                </div>
+                <button class="btn-practica" onclick="navegarA('espacio-hsv')">Iniciar Módulo →</button>
+            </div>
+
+            <div class="tarjeta">
+                <div>
+                    <div class="num-practica">Práctica 04</div>
+                    <h2>Color Tracking</h2>
+                    <p>Algoritmos de seguimiento de objetos en tiempo real basados en umbralización y filtrado por rangos de color específicos.</p>
+                </div>
+                <button class="btn-practica" onclick="navegarA('color-tracking')">Iniciar Módulo →</button>
+            </div>
+
+            <div class="tarjeta">
+                <div>
+                    <div class="num-practica">Práctica 05</div>
+                    <h2>Reconocimiento de Figuras</h2>
+                    <p>Detección, análisis de contornos y clasificación geométrica de formas (triángulos, cuadrados, círculos) mediante descriptores.</p>
+                </div>
+                <button class="btn-practica" onclick="navegarA('reconocimiento-figuras')">Iniciar Módulo →</button>
+            </div>
+
+            <div class="tarjeta">
+                <div>
+                    <div class="num-practica">Práctica 06</div>
+                    <h2>Esqueletización</h2>
+                    <p>Aplicación de técnicas morfológicas de adelgazamiento binario para la extracción del eje medial o esqueleto estructural de las formas.</p>
+                </div>
+                <button class="btn-practica" onclick="navegarA('esqueletizacion')">Iniciar Módulo →</button>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Practicario Digital - Laboratorio de Visión Artificial. Diseñado para entornos de ingeniería.</p>
+    </footer>
+
+    <script>
+        function navegarA(modulo) {
+            // Reemplaza estas rutas con las URLs de tus prácticas reales 
+            // (pueden ser archivos locales como 'practicas/histogramas.html' o rutas de un framework)
+            const rutas = {
+                'operaciones-imagenes': 'practicas/operaciones.html',
+                'histogramas': 'practicas/histogramas.html',
+                'espacio-hsv': 'practicas/hsv.html',
+                'color-tracking': 'practicas/tracking.html',
+                'reconocimiento-figuras': 'practicas/figuras.html',
+                'esqueletizacion': 'practicas/esqueletizacion.html'
+            };
+
+            const destino = rutas[modulo];
+            
+            if (destino) {
+                console.log(`Redireccionando a: ${destino}`);
+                // Descomenta la siguiente línea para activar la redirección real:
+                // window.location.href = destino;
+                alert(`Redirección simulada a la interfaz de: ${modulo}\n(Ruta configurada: ${destino})`);
+            } else {
+                console.error('Módulo no encontrado');
+            }
+        }
+    </script>
+</body>
+</html>

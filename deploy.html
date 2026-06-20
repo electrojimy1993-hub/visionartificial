@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sección en Desarrollo - Visión Artificial</title>
+    <style>
+        /* Variables de Diseño (Idénticas a la página principal) */
+        :root {
+            --bg-principal: #0f172a;
+            --bg-tarjeta: #1e293b;
+            --texto-principal: #f8fafc;
+            --texto-secundario: #94a3b8;
+            --cyan-accent: #38bdf8;
+            --purple-accent: #a855f7;
+            --borde: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-principal);
+            color: var(--texto-principal);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Contenedor Central */
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            flex-grow: 1;
+            max-width: 600px;
+        }
+
+        /* Animación / Gráfico Temático (Matriz de Convolución en proceso) */
+        .contenedor-grafico {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Simulación de la retícula de píxeles/matriz */
+        .matriz-scanning {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px dashed var(--texto-secundario);
+            border-radius: 12px;
+            opacity: 0.3;
+        }
+
+        /* Línea de escaneo láser (Visión Artificial) */
+        .laser-scan {
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, transparent, var(--cyan-accent), transparent);
+            box-shadow: 0 0 12px var(--cyan-accent);
+            animation: rodarLaser 3s ease-in-out infinite;
+        }
+
+        /* Icono de engranaje/código en desarrollo */
+        .icono-desarrollo {
+            position: absolute;
+            top: 25%;
+            left: 25%;
+            width: 50%;
+            height: 50%;
+            border: 4px double var(--purple-accent);
+            border-radius: 50%;
+            animation: rotar 8s linear infinite;
+        }
+
+        .icono-desarrollo::before {
+            content: '</>';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-auto);
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            color: var(--cyan-accent);
+            font-size: 1.2rem;
+        }
+
+        /* Textos */
+        .badge-estado {
+            background-color: rgba(168, 85, 247, 0.15);
+            color: var(--purple-accent);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #ffffff, var(--texto-secundario));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: var(--texto-secundario);
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Botón de Regreso */
+        .btn-regresar {
+            background: linear-gradient(135deg, var(--cyan-accent) 0%, #0284c7 100%);
+            color: var(--bg-principal);
+            border: none;
+            padding: 0.85rem 2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
+        }
+
+        .btn-regresar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.45);
+        }
+
+        /* Pie de página */
+        footer {
+            width: 100%;
+            background-color: #0b0f19;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--texto-secundario);
+            border-top: 1px solid var(--borde);
+        }
+
+        /* Animaciones CSS */
+        @keyframes rodarLaser {
+            0%, 100% { top: 0%; opacity: 0.3; }
+            50% { top: 100%; opacity: 1; }
+        }
+
+        @keyframes rotar {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <div class="contenedor-grafico">
+            <div class="matriz-scanning"></div>
+            <div class="laser-scan"></div>
+            <div class="icono-desarrollo"></div>
+        </div>
+
+        <div class="badge-estado">Módulo en Desarrollo</div>
+        <h1>Procesando Algoritmos...</h1>
+        <p>
+            Esta práctica se encuentra actualmente en fase de implementación y calibración. 
+            Estamos preparando el entorno interactivo para asegurar el correcto renderizado del procesamiento de imágenes.
+        </p>
+
+        <button class="btn-regresar" onclick="volverAlInicio()">← Volver al Panel Principal</button>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Practicario Digital - Laboratorio de Visión Artificial.</p>
+    </footer>
+
+    <script>
+        function volverAlInicio() {
+            // Cambia 'index.html' por la ruta de tu menú principal si es diferente
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

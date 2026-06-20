@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica Interactiva: Procesamiento Digital de Imágenes - OpenCV & Python</title>
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- BARRA DE NAVEGACIÓN -->
+    <header class="border-b border-slate-800 bg-slate-950 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-cyan-600/20 text-cyan-400 rounded-lg border border-cyan-500/30">
+                    <i data-lucide="cpu" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Guía de Visión Artificial <span class="text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono">OpCV-101</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Práctica de Laboratorio para Ingeniería Mecatrónica</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchTab('teoria')" id="tab-teoria" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition">
+                    <i class="fa-solid fa-book mr-2"></i>Guía & Teoría
+                </button>
+                <button onclick="switchTab('simulador')" id="tab-simulador" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-sliders mr-2"></i>Simulador OpenCV
+                </button>
+                <button onclick="switchTab('desafios')" id="tab-desafios" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-trophy mr-2"></i>Desafíos
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- NOTIFICACIÓN FLOTANTE -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toast-msg">¡Código copiado al portapapeles!</span>
+    </div>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+
+        <!-- SECCIÓN 1: GUÍA & TEORÍA -->
+        <section id="sec-teoria" class="space-y-8">
+            <div class="bg-gradient-to-r from-cyan-900/30 via-slate-900 to-slate-900 border border-cyan-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-cyan-400 font-mono text-xs uppercase tracking-widest font-semibold">Introducción Práctica</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Operaciones de Bajo Nivel en Imágenes</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                        En mecatrónica, el procesamiento de imágenes es crucial para que los robots y sistemas automatizados entiendan su entorno. Antes de aplicar Inteligencia Artificial compleja, las imágenes se filtran, segmentan y transforman mediante 
+                        <strong class="text-white">operaciones aritméticas</strong> (control de iluminación, fusión de sensores), 
+                        <strong class="text-white">operaciones lógicas/bit a bit</strong> (enmascaramiento de regiones de interés) y 
+                        <strong class="text-white">transformaciones geométricas</strong> (corrección de perspectiva de cámaras y alineación).
+                    </p>
+                    <div class="mt-6 flex flex-wrap gap-4 text-xs font-mono text-slate-400">
+                        <span class="flex items-center gap-1.5"><i class="fa-brands fa-python text-yellow-500"></i> Python 3.x</span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-circle-nodes text-blue-400"></i> OpenCV (cv2)</span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-table text-emerald-400"></i> NumPy</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTENIDO DE TEORÍA -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Tarjeta 1: Aritmética -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-cyan-400 text-2xl mb-4"><i class="fa-solid fa-calculator"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">1. Operaciones Aritméticas</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            A diferencia del desbordamiento en NumPy (<code class="text-rose-400 bg-slate-900 px-1 py-0.5 rounded font-mono">250 + 10 = 4</code>), OpenCV emplea <strong>aritmética saturada</strong> (<code class="text-emerald-400 bg-slate-900 px-1 py-0.5 rounded font-mono">250 + 10 = 255</code>). Esto evita artefactos visuales indeseados.
+                        </p>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 mb-4 text-xs code-font text-slate-300 space-y-2">
+                            <p><span class="text-cyan-400"># Suma con saturación</span><br>res = cv2.add(img1, img2)</p>
+                            <p><span class="text-cyan-400"># Fusión con pesos (Blend)</span><br>res = cv2.addWeighted(img1, alpha, img2, beta, gamma)</p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-slate-500 italic">Útil para: Ajustar brillo, fusión de imágenes y desvanecidos (cross-fade).</span>
+                </div>
+
+                <!-- Tarjeta 2: Lógicas (Bit a Bit) -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-violet-400 text-2xl mb-4"><i class="fa-solid fa-microchip"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">2. Operaciones Bit a Bit</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Trabajan a nivel de bits de cada píxel de forma independiente. Son de gran utilidad cuando queremos aislar regiones irregulares mediante una <strong>máscara binaria</strong> (píxeles blancos de interés, negros de fondo).
+                        </p>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 mb-4 text-xs code-font text-slate-300 space-y-2">
+                            <p><span class="text-violet-400"># Enmascaramiento común</span><br>res = cv2.bitwise_and(img1, img1, mask=mascara)</p>
+                            <p><span class="text-violet-400"># Inversión de imagen</span><br>res = cv2.bitwise_not(img1)</p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-slate-500 italic">Útil para: Aislar objetos de interés, aplicar logos, y segmentación cromática.</span>
+                </div>
+
+                <!-- Tarjeta 3: Geométricas -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-amber-400 text-2xl mb-4"><i class="fa-solid fa-shapes"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">3. Operaciones Geométricas</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Modifican la disposición espacial de los píxeles. Las transformaciones afines de OpenCV utilizan matrices de transformación de tamaño $2 \times 3$ para trasladar, rotar y escalar.
+                        </p>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 mb-4 text-xs code-font text-slate-300 space-y-2">
+                            <p><span class="text-amber-400"># Rotación con matriz 2D</span><br>M = cv2.getRotationMatrix2D(centro, angulo, escala)<br>res = cv2.warpAffine(img, M, (ancho, alto))</p>
+                        </div>
+                    </div>
+                    <span class="text-xs text-slate-500 italic">Útil para: Enderezado de cámaras, estabilización y aumento de datos (Augmentation).</span>
+                </div>
+            </div>
+
+            <!-- CÓMO EMPEZAR CON PYTHON -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fa-brands fa-python text-yellow-500 text-xl"></i>
+                    <h3 class="text-lg font-semibold text-white">Código de Inicialización en Python</h3>
+                </div>
+                <p class="text-sm text-slate-300 mb-4">
+                    Para comenzar la práctica real en tu computadora, instala las librerías necesarias con <code class="text-cyan-400 font-mono bg-slate-900 px-1.5 py-0.5 rounded">pip install opencv-python numpy</code> y arranca con este código base para leer y preparar las imágenes:
+                </p>
+                <div class="relative group">
+                    <button onclick="copyCode('init-python-code')" class="absolute top-3 right-3 bg-slate-800 hover:bg-slate-700 text-xs px-2.5 py-1.5 rounded text-slate-300 border border-slate-700 transition flex items-center gap-1">
+                        <i class="fa-solid fa-copy"></i> Copiar
+                    </button>
+                    <pre id="init-python-code" class="text-xs md:text-sm bg-slate-900 p-4 rounded-xl border border-slate-800 text-slate-300 overflow-x-auto code-font">
+<span class="text-slate-500"># -*- coding: utf-8 -*-</span>
+<span class="text-purple-400">import</span> cv2
+<span class="text-purple-400">import</span> numpy <span class="text-purple-400">as</span> np
+
+<span class="text-slate-500"># 1. Cargar las imágenes de prueba en escala de grises</span>
+<span class="text-slate-500"># Nota: Para operaciones aritméticas y de bits, deben tener las mismas dimensiones</span>
+imagen_a = cv2.imread(<span class="text-emerald-400">'imagen_a.png'</span>, cv2.IMREAD_GRAYSCALE)
+imagen_b = cv2.imread(<span class="text-emerald-400">'imagen_b.png'</span>, cv2.IMREAD_GRAYSCALE)
+
+<span class="text-slate-500"># Redimensionar si es necesario para asegurar tamaños idénticos</span>
+ancho, alto = <span class="text-amber-400">400</span>, <span class="text-amber-400">400</span>
+imagen_a = cv2.resize(imagen_a, (ancho, alto))
+imagen_b = cv2.resize(imagen_b, (ancho, alto))
+
+<span class="text-slate-500"># Aquí aplicamos las operaciones que experimentarás en la pestaña del "Simulador"</span>
+<span class="text-slate-500"># Por ejemplo, suma ponderada:</span>
+resultado_blend = cv2.addWeighted(imagen_a, <span class="text-amber-400">0.7</span>, imagen_b, <span class="text-amber-400">0.3</span>, <span class="text-amber-400">0</span>)
+
+<span class="text-slate-500"># Mostrar resultados</span>
+cv2.imshow(<span class="text-emerald-400">'Resultado'</span>, resultado_blend)
+cv2.waitKey(<span class="text-amber-400">0</span>)
+cv2.destroyAllWindows()</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: SIMULADOR INTERACTIVO -->
+        <section id="sec-simulador" class="hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- CONTROLES (IZQUIERDA) -->
+                <div class="lg:col-span-4 bg-slate-950 border border-slate-800 p-6 rounded-xl space-y-6">
+                    <div class="border-b border-slate-800 pb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-cyan-400"></i> Parámetros de Operación
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">Configura la operación para visualizar el resultado matemático de los píxeles.</p>
+                    </div>
+
+                    <!-- SELECTOR DE OPERACIONES -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Tipo de Operación</label>
+                        <select id="op-selector" onchange="updateOperation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                            <optgroup label="Operaciones Aritméticas" class="bg-slate-950">
+                                <option value="add">Suma Saturada (cv2.add)</option>
+                                <option value="subtract">Resta (cv2.subtract)</option>
+                                <option value="blend" selected>Mezcla Ponderada (cv2.addWeighted)</option>
+                            </optgroup>
+                            <optgroup label="Operaciones Lógicas (Bit a Bit)" class="bg-slate-950">
+                                <option value="and">Bitwise AND</option>
+                                <option value="or">Bitwise OR</option>
+                                <option value="xor">Bitwise XOR</option>
+                                <option value="not">Bitwise NOT (Img A)</option>
+                            </optgroup>
+                            <optgroup label="Transformaciones Geométricas" class="bg-slate-950">
+                                <option value="translate">Traslación</option>
+                                <option value="rotate">Rotación</option>
+                                <option value="scale">Escalado</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- SELECCIÓN DE IMÁGENES DE PRUEBA -->
+                    <div class="space-y-3 pt-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Imágenes de Entrada</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="setBuiltInPattern('geometric')" id="pat-geometric" class="px-2 py-1.5 text-xs rounded border border-cyan-500/50 bg-cyan-500/10 text-cyan-300 transition">
+                                <i class="fa-solid fa-shapes mr-1"></i> Patrón Geométrico
+                            </button>
+                            <button onclick="setBuiltInPattern('text')" id="pat-text" class="px-2 py-1.5 text-xs rounded border border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600 transition">
+                                <i class="fa-solid fa-font mr-1"></i> Patrón de Texto
+                            </button>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-xs text-slate-400 block">O sube tus propias imágenes en escala de grises:</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="flex flex-col items-center justify-center p-2 border border-dashed border-slate-700 hover:border-slate-500 rounded cursor-pointer bg-slate-900/50 transition">
+                                    <span class="text-[10px] text-slate-400"><i class="fa-solid fa-upload mb-1 block text-center"></i> Cargar A</span>
+                                    <input type="file" id="upload-a" class="hidden" accept="image/*" onchange="handleImageUpload(event, 'A')">
+                                </label>
+                                <label class="flex flex-col items-center justify-center p-2 border border-dashed border-slate-700 hover:border-slate-500 rounded cursor-pointer bg-slate-900/50 transition">
+                                    <span class="text-[10px] text-slate-400"><i class="fa-solid fa-upload mb-1 block text-center"></i> Cargar B</span>
+                                    <input type="file" id="upload-b" class="hidden" accept="image/*" onchange="handleImageUpload(event, 'B')">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONTROLES DINÁMICOS -->
+                    <div class="border-t border-slate-800 pt-4 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Ajustar Variables</h4>
+                            <span id="control-badge" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Modo: Blend</span>
+                        </div>
+
+                        <!-- Slider 1 -->
+                        <div id="slider-group-1" class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span id="label-slider-1" class="text-slate-400">Alpha (Peso Imagen A):</span>
+                                <span id="val-slider-1" class="text-cyan-400">0.5</span>
+                            </div>
+                            <input type="range" id="slider-1" min="0" max="1" step="0.05" value="0.5" oninput="processImages()" class="w-full accent-cyan-500 bg-slate-800 rounded-lg appearance-none h-1.5 cursor-pointer">
+                        </div>
+
+                        <!-- Slider 2 -->
+                        <div id="slider-group-2" class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span id="label-slider-2" class="text-slate-400">Beta (Peso Imagen B):</span>
+                                <span id="val-slider-2" class="text-cyan-400">0.5</span>
+                            </div>
+                            <input type="range" id="slider-2" min="0" max="1" step="0.05" value="0.5" oninput="processImages()" class="w-full accent-cyan-500 bg-slate-800 rounded-lg appearance-none h-1.5 cursor-pointer">
+                        </div>
+
+                        <!-- Slider 3 -->
+                        <div id="slider-group-3" class="space-y-1">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span id="label-slider-3" class="text-slate-400">Gamma (Brillo Añadido):</span>
+                                <span id="val-slider-3" class="text-cyan-400">0</span>
+                            </div>
+                            <input type="range" id="slider-3" min="-100" max="100" step="5" value="0" oninput="processImages()" class="w-full accent-cyan-500 bg-slate-800 rounded-lg appearance-none h-1.5 cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CANVAS & CODIGO (DERECHA) -->
+                <div class="lg:col-span-8 flex flex-col gap-6">
+                    
+                    <!-- PANEL DE PREVISUALIZACIÓN -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 md:p-6">
+                        <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4"><i class="fa-solid fa-chart-area text-emerald-400 mr-2"></i>Resultados Visuales</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center justify-center">
+                            <!-- Imagen A -->
+                            <div class="flex flex-col items-center bg-slate-900/50 p-2 rounded-lg border border-slate-800">
+                                <span class="text-xs font-mono text-slate-400 mb-2">Entrada A (Source 1)</span>
+                                <canvas id="canvas-a" width="200" height="200" class="bg-black rounded border border-slate-700 w-full max-w-[200px] aspect-square"></canvas>
+                            </div>
+
+                            <!-- Imagen B -->
+                            <div id="container-img-b" class="flex flex-col items-center bg-slate-900/50 p-2 rounded-lg border border-slate-800">
+                                <span class="text-xs font-mono text-slate-400 mb-2">Entrada B (Source 2)</span>
+                                <canvas id="canvas-b" width="200" height="200" class="bg-black rounded border border-slate-700 w-full max-w-[200px] aspect-square"></canvas>
+                            </div>
+
+                            <!-- Imagen Resultado -->
+                            <div class="flex flex-col items-center bg-slate-900/50 p-3 rounded-lg border-2 border-cyan-500/40">
+                                <span class="text-xs font-mono text-cyan-400 font-bold mb-2">Salida (Output)</span>
+                                <canvas id="canvas-res" width="200" height="200" class="bg-black rounded border border-slate-700 w-full max-w-[200px] aspect-square"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GENERADOR DE CODIGO PYTHON -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-code text-cyan-400"></i> Código Generado para Python + OpenCV
+                            </h3>
+                            <button onclick="copyCode('generated-code-pre')" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-copy"></i> Copiar Código
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <pre id="generated-code-pre" class="text-xs md:text-sm bg-slate-900 p-4 rounded-xl border border-slate-800 text-slate-300 overflow-x-auto code-font max-h-72"></pre>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-3 italic">
+                            *Nota: Este código se genera dinámicamente según configures los deslizadores arriba. Ejecútalo en tu equipo para validar la respuesta binaria exacta de OpenCV.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 3: DESAFÍOS MECTRÓNICOS -->
+        <section id="sec-desafios" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-violet-900/30 via-slate-900 to-slate-900 border border-violet-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-violet-400 font-mono text-xs uppercase tracking-widest font-semibold">Evaluación Mecatrónica</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Retos Prácticos de Programación</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm">
+                        Resuelve los siguientes retos usando tu entorno local de Python con OpenCV. Al terminar la práctica, entrega un reporte técnico y el repositorio de GitHub que contenga tus soluciones funcionales.
+                    </p>
+                </div>
+            </div>
+
+            <!-- RETOS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Reto 1 -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">Dificultad: Media</span>
+                            <i class="fa-solid fa-industry text-slate-600 text-xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2">Desafío 1: Estampado / Marca de agua en imágenes de control de calidad</h4>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            En una línea de producción mecatrónica, requieres estampar un logotipo industrial en la esquina superior derecha de todas las fotos de inspección de piezas.
+                        </p>
+                        <div class="space-y-2 text-xs text-slate-300 bg-slate-900 p-3 rounded border border-slate-800">
+                            <p class="font-bold text-slate-200">Requerimientos:</p>
+                            <ul class="list-disc pl-4 space-y-1">
+                                <li>El logo debe ser aplicado sin alterar los colores de la pieza de fondo.</li>
+                                <li>Utiliza operaciones <code class="text-violet-400 font-mono">cv2.bitwise_and()</code> y máscaras binarias para recortar la silueta exacta del logotipo antes de sumarlo a la imagen final.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reto 2 -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-mono bg-red-500/10 text-red-300 border border-red-500/20 px-2 py-0.5 rounded">Dificultad: Avanzada</span>
+                            <i class="fa-solid fa-robot text-slate-600 text-xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2">Desafío 2: Enderezado automático de tarjetas electrónicas (PCB)</h4>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Un brazo robótico de pick-and-place requiere colocar componentes en un circuito impreso (PCB). Las tarjetas pueden llegar con un ligero desfase angular en la cinta transportadora.
+                        </p>
+                        <div class="space-y-2 text-xs text-slate-300 bg-slate-900 p-3 rounded border border-slate-800">
+                            <p class="font-bold text-slate-200">Requerimientos:</p>
+                            <ul class="list-disc pl-4 space-y-1">
+                                <li>Desarrolla un algoritmo que detecte el ángulo de inclinación de la tarjeta (mediante contornos o bordes).</li>
+                                <li>Calcula la matriz afín con <code class="text-amber-400 font-mono">cv2.getRotationMatrix2D()</code>.</li>
+                                <li>Corrige automáticamente la alineación usando <code class="text-amber-400 font-mono">cv2.warpAffine()</code> para que la PCB quede perfectamente ortogonal a la cámara.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 bg-slate-950 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p class="text-xs text-slate-400">Universidad Politécnica - Área de Mecatrónica y Visión por Computadora</p>
+            <p class="text-[10px] text-slate-600">Material educativo libre licenciado bajo MIT. Diseñado para integración con Github Pages.</p>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE CONTROL DEL SIMULADOR & RENDERING -->
+    <script>
+        // Inicialización de Lucide Icons
+        lucide.createIcons();
+
+        // Referencias a los Canvas
+        const canvasA = document.getElementById('canvas-a');
+        const canvasB = document.getElementById('canvas-b');
+        const canvasRes = document.getElementById('canvas-res');
+        const ctxA = canvasA.getContext('2d');
+        const ctxB = canvasB.getContext('2d');
+        const ctxRes = canvasRes.getContext('2d');
+
+        // Estado del Simulador
+        let currentPattern = 'geometric';
+        let currentOperation = 'blend';
+        let imgAData = null;
+        let imgBData = null;
+
+        // Cambiar entre pestañas
+        function switchTab(tabName) {
+            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            if (activeBtn) {
+                if (tabName === 'teoria') activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition";
+                else if (tabName === 'simulador') activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition";
+                else if (tabName === 'desafios') activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-violet-600 text-white transition";
+            }
+
+            if (tabName === 'simulador') {
+                // Forzar inicialización de gráficos cuando se abra la simulación
+                setTimeout(initSimulation, 100);
+            }
+        }
+
+        // Mostrar notificación tipo toast
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            toast.className = toast.className.replace('translate-y-20 opacity-0', 'translate-y-0 opacity-100');
+            setTimeout(() => {
+                toast.className = toast.className.replace('translate-y-0 opacity-100', 'translate-y-20 opacity-0');
+            }, 3000);
+        }
+
+        // Copiar código al portapapeles
+        function copyCode(preId) {
+            const preElement = document.getElementById(preId);
+            const r = document.createRange();
+            r.selectNode(preElement);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(r);
+            try {
+                document.execCommand('copy');
+                window.getSelection().removeAllRanges();
+                showToast('¡Código copiado al portapapeles!');
+            } catch (err) {
+                showToast('Error al copiar el código.');
+            }
+        }
+
+        // Generación de patrones pre-construidos
+        function drawGeometricPattern() {
+            // Dibujar Patrón A (Círculo sólido excéntrico)
+            ctxA.fillStyle = '#000000';
+            ctxA.fillRect(0, 0, 200, 200);
+            ctxA.fillStyle = '#ffffff';
+            ctxA.beginPath();
+            ctxA.arc(90, 100, 50, 0, Math.PI * 2);
+            ctxA.fill();
+
+            // Dibujar Patrón B (Cuadrado sólido excéntrico)
+            ctxB.fillStyle = '#000000';
+            ctxB.fillRect(0, 0, 200, 200);
+            ctxB.fillStyle = '#ffffff';
+            ctxB.fillRect(90, 50, 80, 100);
+        }
+
+        function drawTextPattern() {
+            // Dibujar Patrón A (Fondo con rejilla gris e iniciales)
+            ctxA.fillStyle = '#1e293b';
+            ctxA.fillRect(0, 0, 200, 200);
+            ctxA.strokeStyle = '#334155';
+            ctxA.lineWidth = 2;
+            for (let i = 0; i < 200; i += 20) {
+                ctxA.beginPath();
+                ctxA.moveTo(i, 0);
+                ctxA.lineTo(i, 200);
+                ctxA.stroke();
+                ctxA.beginPath();
+                ctxA.moveTo(0, i);
+                ctxA.lineTo(200, i);
+                ctxA.stroke();
+            }
+            ctxA.fillStyle = '#ffffff';
+            ctxA.font = 'bold 80px sans-serif';
+            ctxA.textAlign = 'center';
+            ctxA.textBaseline = 'middle';
+            ctxA.fillText('M', 100, 100);
+
+            // Dibujar Patrón B (Un marco degradado o máscara de círculo para recortar)
+            ctxB.fillStyle = '#000000';
+            ctxB.fillRect(0, 0, 200, 200);
+            
+            let grad = ctxB.createRadialGradient(100, 100, 10, 100, 100, 90);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.7, '#888888');
+            grad.addColorStop(1, '#000000');
+            ctxB.fillStyle = grad;
+            ctxB.beginPath();
+            ctxB.arc(100, 100, 90, 0, Math.PI*2);
+            ctxB.fill();
+        }
+
+        // Selección de patrones del menú
+        function setBuiltInPattern(type) {
+            currentPattern = type;
+            document.getElementById('pat-geometric').className = type === 'geometric' ? "px-2 py-1.5 text-xs rounded border border-cyan-500/50 bg-cyan-500/10 text-cyan-300 transition" : "px-2 py-1.5 text-xs rounded border border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600 transition";
+            document.getElementById('pat-text').className = type === 'text' ? "px-2 py-1.5 text-xs rounded border border-cyan-500/50 bg-cyan-500/10 text-cyan-300 transition" : "px-2 py-1.5 text-xs rounded border border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600 transition";
+            
+            if (type === 'geometric') {
+                drawGeometricPattern();
+            } else {
+                drawTextPattern();
+            }
+            processImages();
+        }
+
+        // Control de subida de imágenes locales
+        function handleImageUpload(event, target) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const ctx = target === 'A' ? ctxA : ctxB;
+                    ctx.clearRect(0, 0, 200, 200);
+                    
+                    // Convertir a escala de grises dibujando con filtro en Canvas
+                    ctx.filter = 'grayscale(100%)';
+                    ctx.drawImage(img, 0, 0, 200, 200);
+                    ctx.filter = 'none';
+
+                    processImages();
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        // Actualizar UI del simulador de acuerdo a la operación seleccionada
+        function updateOperation() {
+            currentOperation = document.getElementById('op-selector').value;
+            const b = document.getElementById('control-badge');
+            b.textContent = "Modo: " + currentOperation.toUpperCase();
+
+            // Referencias a grupos de controles
+            const g1 = document.getElementById('slider-group-1');
+            const g2 = document.getElementById('slider-group-2');
+            const g3 = document.getElementById('slider-group-3');
+
+            const l1 = document.getElementById('label-slider-1');
+            const l2 = document.getElementById('label-slider-2');
+            const l3 = document.getElementById('label-slider-3');
+
+            const s1 = document.getElementById('slider-1');
+            const s2 = document.getElementById('slider-2');
+            const s3 = document.getElementById('slider-3');
+
+            const bContainer = document.getElementById('container-img-b');
+
+            // Ocultar la visualización del input B de manera inteligente para transformaciones que solo ocupan una imagen
+            if (['translate', 'rotate', 'scale', 'not'].includes(currentOperation)) {
+                bContainer.style.opacity = '0.3';
+            } else {
+                bContainer.style.opacity = '1.0';
+            }
+
+            // Configurar Sliders dinámicamente según la operación mecatrónica
+            switch(currentOperation) {
+                case 'add':
+                    g1.classList.remove('hidden'); l1.textContent = "Sumar Brillo A:"; s1.min = "0"; s1.max = "150"; s1.step = "5"; s1.value = "0";
+                    g2.classList.add('hidden');
+                    g3.classList.add('hidden');
+                    break;
+                case 'subtract':
+                    g1.classList.remove('hidden'); l1.textContent = "Multiplicador de resta:"; s1.min = "0.1"; s1.max = "2"; s1.step = "0.1"; s1.value = "1.0";
+                    g2.classList.add('hidden');
+                    g3.classList.add('hidden');
+                    break;
+                case 'blend':
+                    g1.classList.remove('hidden'); l1.textContent = "Alpha (Peso Img A):"; s1.min = "0"; s1.max = "1"; s1.step = "0.05"; s1.value = "0.5";
+                    g2.classList.remove('hidden'); l2.textContent = "Beta (Peso Img B):"; s2.min = "0"; s2.max = "1"; s2.step = "0.05"; s2.value = "0.5";
+                    g3.classList.remove('hidden'); l3.textContent = "Gamma (Brillo Añadido):"; s3.min = "-100"; s3.max = "100"; s3.step = "5"; s3.value = "0";
+                    break;
+                case 'and':
+                case 'or':
+                case 'xor':
+                    g1.classList.add('hidden');
+                    g2.classList.add('hidden');
+                    g3.classList.add('hidden');
+                    break;
+                case 'not':
+                    g1.classList.add('hidden');
+                    g2.classList.add('hidden');
+                    g3.classList.add('hidden');
+                    break;
+                case 'translate':
+                    g1.classList.remove('hidden'); l1.textContent = "Traslación X (Píxeles):"; s1.min = "-100"; s1.max = "100"; s1.step = "5"; s1.value = "15";
+                    g2.classList.remove('hidden'); l2.textContent = "Traslación Y (Píxeles):"; s2.min = "-100"; s2.max = "100"; s2.step = "5"; s2.value = "15";
+                    g3.classList.add('hidden');
+                    break;
+                case 'rotate':
+                    g1.classList.remove('hidden'); l1.textContent = "Ángulo de Rotación (°):"; s1.min = "-180"; s1.max = "180"; s1.step = "5"; s1.value = "30";
+                    g2.classList.remove('hidden'); l2.textContent = "Escala Relativa:"; s2.min = "0.5"; s2.max = "2"; s2.step = "0.1"; s2.value = "1.0";
+                    g3.classList.add('hidden');
+                    break;
+                case 'scale':
+                    g1.classList.remove('hidden'); l1.textContent = "Factor Escalado Ancho:"; s1.min = "0.5"; s1.max = "2.0"; s1.step = "0.1"; s1.value = "1.0";
+                    g2.classList.remove('hidden'); l2.textContent = "Factor Escalado Alto:"; s2.min = "0.5"; s2.max = "2.0"; s2.step = "0.1"; s2.value = "1.0";
+                    g3.classList.add('hidden');
+                    break;
+            }
+
+            processImages();
+        }
+
+        // LÓGICA DE PROCESAMIENTO MATEMÁTICO DE PÍXELES (MIMETIZANDO OPENCV)
+        function processImages() {
+            // Leer valores de sliders
+            const s1Val = parseFloat(document.getElementById('slider-1').value);
+            const s2Val = parseFloat(document.getElementById('slider-2').value);
+            const s3Val = parseFloat(document.getElementById('slider-3').value);
+
+            // Actualizar etiquetas de valores en la interfaz
+            const val1 = document.getElementById('val-slider-1'); if(val1) val1.textContent = s1Val;
+            const val2 = document.getElementById('val-slider-2'); if(val2) val2.textContent = s2Val;
+            const val3 = document.getElementById('val-slider-3'); if(val3) val3.textContent = s3Val;
+
+            // Obtener ImageData de los canvas de entrada
+            const dataA = ctxA.getImageData(0, 0, 200, 200);
+            const dataB = ctxB.getImageData(0, 0, 200, 200);
+            const pixelsA = dataA.data;
+            const pixelsB = dataB.data;
+
+            // Preparar Buffer de Salida
+            const outImg = ctxRes.createImageData(200, 200);
+            const outPixels = outImg.data;
+
+            // Generar código Python correspondiente en tiempo real
+            let pythonCode = ``;
+
+            switch (currentOperation) {
+                case 'add':
+                    // Suma Saturada pixel a pixel (OpenCV cv2.add)
+                    for (let i = 0; i < pixelsA.length; i += 4) {
+                        // En escala de grises r = g = b, calculamos para el canal rojo
+                        const valA = pixelsA[i];
+                        const factorBrillo = s1Val;
+                        
+                        // Saturación en 255 (Aritmética saturada)
+                        let res = Math.min(255, valA + factorBrillo);
+                        
+                        outPixels[i] = res;
+                        outPixels[i+1] = res;
+                        outPixels[i+2] = res;
+                        outPixels[i+3] = 255; // Alpha opaco
+                    }
+                    ctxRes.putImageData(outImg, 0, 0);
+
+                    pythonCode = `import cv2\n\n# Cargar Imagen de entrada\nimg_a = cv2.imread('entrada_a.png', cv2.IMREAD_GRAYSCALE)\n\n# Aplicar un aumento de brillo mediante suma saturada\n# En python es equivalente a sumarle una constante o usar cv2.add\nres = cv2.add(img_a, ${s1Val})\n\ncv2.imshow('Suma Saturada OpenCV', res)\ncv2.waitKey(0)`;
+                    break;
+
+                case 'subtract':
+                    // Resta pixel a pixel saturada en 0 (cv2.subtract)
+                    for (let i = 0; i < pixelsA.length; i += 4) {
+                        const valA = pixelsA[i];
+                        const valB = pixelsB[i];
+                        
+                        // Saturación inferior en 0
+                        let res = Math.max(0, valA - (valB * s1Val));
+                        
+                        outPixels[i] = res;
+                        outPixels[i+1] = res;
+                        outPixels[i+2] = res;
+                        outPixels[i+3] = 255;
+                    }
+                    ctxRes.putImageData(outImg, 0, 0);
+
+                    pythonCode = `import cv2\n\n# Cargar imágenes\nimg_a = cv2.imread('entrada_a.png', cv2.IMREAD_GRAYSCALE)\nimg_b = cv2.imread('entrada_b.png', cv2.IMREAD_GRAYSCALE)\n\n# Multiplicar matriz por escala antes de restar\nimg_b_scaled = cv2.multiply(img_b, ${s1Val})\n\n# Resta saturada (valores menores que 0 se ajustan a 0)\nres = cv2.subtract(img_a, img_b_scaled)\n\ncv2.imshow('Resta OpenCV', res)\ncv2.waitKey(0)`;
+                    break;
+
+                case 'blend':
+                    // Suma ponderada: cv2.addWeighted(img1, alpha, img2, beta, gamma)
+                    const alpha = s1Val;
+                    const beta = s2Val;
+                    const gamma = s3Val;
+
+                    for (let i = 0; i < pixelsA.length; i += 4) {
+                        const valA = pixelsA[i];
+                        const valB = pixelsB[i];
+                        
+                        // Formula: alpha * A + beta * B + gamma
+                        let res = Math.round(alpha * valA + beta * valB + gamma);
+                        res = Math.max(0, Math.min(255, res)); // Clipping saturado
+                        
+                        outPixels[i] = res;
+                        outPixels[i+1] = res;
+                        outPixels[i+2] = res;
+                        outPixels[i+3] = 255;
+                    }
+                    ctxRes.putImageData(outImg, 0, 0);
+
+                    pythonCode = `import cv2\n\n# Cargar imágenes\nimg_a = cv2.imread('entrada_a.png', cv2.IMREAD_GRAYSCALE)\nimg_b = cv2.imread('entrada_b.png', cv2.IMREAD_GRAYSCALE)\n\n# Suma ponderada con pesos de canal\nres = cv2.addWeighted(img_a, ${alpha}, img_b, ${beta}, ${gamma})\n\ncv2.imshow('Suma Ponderada (Fusión)', res)\ncv2.waitKey(0)`;
+                    break;
+
+                case 'and':
+                    for (let i = 0; i < pixelsA.length; i += 4) {
+                        // Operación bitwise AND de cada valor numérico de 8 bits
+                        const res = pixelsA[i] & pixelsB[i];
+                        outPixels[i] = res;
+                        outPixels[i+1] = res;
+                        outPixels[i+2] = res;
+                        outPixels[i+3] = 255;
+                    }
+                    ctxRes.putImageData(outImg, 0, 0);
+
+                    pythonCode = `import cv2\n\n# Cargar imágenes de prueba\nimg_a = cv2.imread('entrada_a.png', cv2.IMREAD_GRAYSCALE)\nimg_b = cv2.imread('entrada_b.png', cv2.IMREAD_GRAYSCALE)\n\n# Operación lógica AND binaria\nres = cv2.bitwise_and(img_a, img_b)\n\ncv2.imshow('Bitwise AND', res)\ncv2.waitKey(0)`;
+                    break;
+
+                case 'or':
+                    for (let i = 0; i < pixelsA.length; i += 4) {
+                        const res = pixelsA[i] | pixelsB[i];
+                        outPixels[i] = res;
+                        outPixels[i+1] = res;
+                        outPixels[i+2] = res;
+                        outPixels[i+3] = 255;
+                    }
+                    ctxRes.putImageData(outImg, 0, 0);
+
+                    pythonCode = `import cv2\n\n# Cargar imágenes de prueba\nimg_a = cv2.imread('entrada_a.png', cv2.IMREAD_GRAYSCALE)\nimg_b = cv2.imread('entrada_b.png', cv2.IMREAD_GRAYSCALE)\n\n# Operación lógica OR binaria\nres = cv2.bitwise_or(img_a, img_b)\n\ncv2.imshow('Bitwise OR', res)\ncv2.waitKey(0)`;
+                    break;
+
+                case 'xor':
+                    for (let i = 0; i < pixelsA.length; i += 4) {
+                        const res = pixelsA[i] ^ pixelsB[i];
+                        outPixels[i] = res;
+                        outPixels[i+1] = res;
+                        outPixels[i+2] = res;
+                        outPixels[i+3] = 255;
+                    }
+                    ctxRes.putImageData(outImg, 0, 0);
+
+                    pythonCode = `import cv2\n\n# Cargar imágenes de prueba\nimg_a = cv2.imread('entrada_a.png', cv2.IMREAD_GRAYSCALE)\nimg_b = cv2.imread('entrada_b.png', cv2.IMREAD_GRAYSCALE)\n\n# Operación lógica XOR binaria\nres = cv2.bitwise_xor(img_a, img_b)\n\ncv2.imshow('Bitwise XOR', res)\ncv2.waitKey(0)`;
+                    break;
+
+                case 'not':
+                    for (let i = 0; i < pixelsA.length; i += 4) {
+                        const res = ~pixelsA[i] & 0xFF; // Inversor de bits
+                        outPixels[i] = res;
+                        outPixels[i+1] = res;
+                        outPixels[i+2] = res;
+                        outPixels[i+3] = 255;
+                    }
+                    ctxRes.putImageData(outImg, 0, 0);
+
+                    pythonCode = `import cv2\n\n# Cargar imagen de prueba\nimg_a = cv2.imread('entrada_a.png', cv2.IMREAD_GRAYSCALE)\n\n# Inversor bitwise NOT (negativo de imagen)\nres = cv2.bitwise_not(img_a)\n\ncv2.imshow('Bitwise NOT', res)\ncv2.waitKey(0)`;
+                    break;
+
+                case 'translate':
+                    // Traslación geométrica aplicando matriz afín en Canvas 2D
+                    ctxRes.fillStyle = '#000000';
+                    ctxRes.fillRect(0, 0, 200, 200);
+                    ctxRes.save();
+                    ctxRes.translate(s1Val, s2Val);
+                    ctxRes.drawImage(canvasA, 0, 0);
+                    ctxRes.restore();
+
+                    pythonCode = `import cv2\nimport numpy as np\n\n# Cargar Imagen\nimg = cv2.imread('entrada_a.png', cv2.IMREAD_GRAYSCALE)\nalto, ancho = img.shape[:2]\n\n# Definir matriz de traslación afín de 2x3\n# [[1, 0, Tx], [0, 1, Ty]]\nM = np.float32([[1, 0, ${s1Val}], [0, 1, ${s2Val}]])\n\n# Aplicar matriz afín\nres = cv2.warpAffine(img, M, (ancho, alto))\n\ncv2.imshow('Traslacion', res)\ncv2.waitKey(0)`;
+                    break;
+
+                case 'rotate':
+                    // Rotación geométrica con matriz afín
+                    ctxRes.fillStyle = '#000000';
+                    ctxRes.fillRect(0, 0, 200, 200);
+                    ctxRes.save();
+                    // Centrar pivote de rotación en 100, 100
+                    ctxRes.translate(100, 100);
+                    ctxRes.rotate((s1Val * Math.PI) / 180);
+                    ctxRes.scale(s2Val, s2Val);
+                    ctxRes.drawImage(canvasA, -100, -100);
+                    ctxRes.restore();
+
+                    pythonCode = `import cv2\n\n# Cargar Imagen\nimg = cv2.imread('entrada_a.png', cv2.IMREAD_GRAYSCALE)\nalto, ancho = img.shape[:2]\n\n# Obtener matriz de rotación de OpenCV (Centro, Ángulo, Escala Relativa)\ncentro = (ancho // 2, alto // 2)\nM = cv2.getRotationMatrix2D(centro, ${s1Val}, ${s2Val})\n\n# Aplicar transformación afín\nres = cv2.warpAffine(img, M, (ancho, alto))\n\ncv2.imshow('Rotacion y Escala', res)\ncv2.waitKey(0)`;
+                    break;
+
+                case 'scale':
+                    // Escalado geométrico
+                    ctxRes.fillStyle = '#000000';
+                    ctxRes.fillRect(0, 0, 200, 200);
+                    ctxRes.save();
+                    ctxRes.scale(s1Val, s2Val);
+                    ctxRes.drawImage(canvasA, 0, 0);
+                    ctxRes.restore();
+
+                    pythonCode = `import cv2\n\n# Cargar Imagen\nimg = cv2.imread('entrada_a.png', cv2.IMREAD_GRAYSCALE)\n\n# Redimensionar usando factores de escala fx y fy\nres = cv2.resize(img, None, fx=${s1Val}, fy=${s2Val}, interpolation=cv2.INTER_LINEAR)\n\ncv2.imshow('Escalado de Imagen', res)\ncv2.waitKey(0)`;
+                    break;
+            }
+
+            // Actualizar bloque de código en HTML
+            document.getElementById('generated-code-pre').textContent = pythonCode;
+        }
+
+        // Ejecutar al iniciar la ventana
+        window.onload = function() {
+            initSimulation();
+        }
+
+        function initSimulation() {
+            drawGeometricPattern();
+            updateOperation();
+        }
+    </script>
+</body>
+</html>
