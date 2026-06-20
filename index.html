@@ -252,10 +252,10 @@
             const destino = rutas[modulo];
             
             if (destino) {
-                console.log(`Redireccionando a: ${destino}`);
+               // console.log(`Redireccionando a: ${destino}`);
                 // Descomenta la siguiente línea para activar la redirección real:
-                // window.location.href = destino;
-                alert(`Redirección simulada a la interfaz de: ${modulo}\n(Ruta configurada: ${destino})`);
+                 window.location.href = destino;
+                //alert(`Redirección simulada a la interfaz de: ${modulo}\n(Ruta configurada: ${destino})`);
             } else {
                 console.error('Módulo no encontrado');
             }
