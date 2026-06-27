@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica Interactiva: Filtrado y Convolución - OpenCV & Python</title>
+    
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- MathJax para fórmulas matemáticas LaTeX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar para IDE feel */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Estilos para los sliders (range inputs) */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #06b6d4; /* cyan-500 */
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Navegación Superior -->
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="../index.html" class="text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-2 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Panel Principal
+                </a>
+                <div class="h-4 w-px bg-slate-700"></div>
+                <span class="text-cyan-400 font-bold uppercase tracking-widest text-xs">Visión Artificial</span>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-md">
+                <i data-lucide="book-open" class="w-4 h-4 text-purple-400"></i>
+                <span class="text-xs font-mono text-slate-300">Práctica_03.py</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HEADER / BARRA DE PESTAÑAS -->
+    <header class="border-b border-slate-800 bg-slate-950 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-cyan-600/20 text-cyan-400 rounded-lg border border-cyan-500/30">
+                    <i data-lucide="filter" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Guía de Visión Artificial <span class="text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono">OpCV-103</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Práctica de Laboratorio: Filtrado Espacial y Morfología</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchTab('teoria')" id="tab-teoria" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition">
+                    <i class="fa-solid fa-book mr-2"></i>Guía & Teoría
+                </button>
+                <button onclick="switchTab('simulador')" id="tab-simulador" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-sliders mr-2"></i>Simulador OpenCV
+                </button>
+                <button onclick="switchTab('desafios')" id="tab-desafios" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-trophy mr-2"></i>Desafíos
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- NOTIFICACIÓN FLOTANTE (TOAST) -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toast-msg">¡Código copiado al portapapeles!</span>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 1: GUÍA & TEORÍA                   -->
+        <!-- ========================================== -->
+        <section id="sec-teoria" class="space-y-8">
+            <div class="bg-gradient-to-r from-cyan-900/30 via-slate-900 to-slate-900 border border-cyan-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-cyan-400 font-mono text-xs uppercase tracking-widest font-semibold">Procesamiento Espacial y Convolución</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Filtrado de Imágenes para Ingeniería</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                        En mecatrónica, los sensores de visión capturan ruido y texturas innecesarias. El <strong>filtrado espacial</strong> es el proceso matemático utilizado para limpiar, segmentar o realzar características (como bordes de piezas). 
+                    </p>
+                    <div class="mt-4 p-4 bg-slate-950 border border-slate-800 rounded-lg text-sm text-slate-400">
+                        <strong class="text-cyan-400 font-mono text-base block mb-2">El Concepto Clave: Convolución y Kernel</strong>
+                        Desde un enfoque pragmático, un <strong>Kernel (o Núcleo)</strong> es simplemente una pequeña matriz (ej. 3x3) que actúa como un "escáner". Se desliza píxel por píxel sobre la imagen original. En cada posición, multiplica los valores de los píxeles locales por los pesos del Kernel y suma los resultados para calcular el nuevo valor del píxel central.
+                    </div>
+                </div>
+            </div>
+
+            <!-- TARJETAS DE TEORÍA -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Tarjeta 1: Filtros de Umbral -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-violet-400 text-2xl mb-4"><i class="fa-solid fa-layer-group"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">1. Umbralización (Binarización)</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Convierte una imagen en escala de grises a blanco y negro (binaria) basándose en un límite (umbral). Fundamental para aislar piezas del fondo.
+                        </p>
+                        <ul class="text-xs text-slate-300 space-y-2 mb-4">
+                            <li><strong class="text-violet-300">Simple:</strong> Usa un valor fijo $T$. Todo píxel $>T$ es blanco, sino negro.</li>
+                            <li><strong class="text-violet-300">Otsu:</strong> Algoritmo que calcula el umbral óptimo automáticamente buscando minimizar la varianza entre el fondo y el objeto.</li>
+                            <li><strong class="text-violet-300">Adaptativo:</strong> Calcula umbrales dinámicos por regiones. Vital cuando la iluminación de la fábrica no es uniforme.</li>
+                        </ul>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-xs code-font text-slate-300">
+                            <p><span class="text-slate-500"># Binarización Adaptativa</span><br>bin = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Filtros Pasa Bajas (Suavizado) -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-droplet"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">2. Filtros Pasa Bajas (Suavizado / Blur)</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Eliminan componentes de alta frecuencia (ruido y detalles finos). Utilizan Kernels donde los pesos suman 1 (para no alterar el brillo global).
+                        </p>
+                        <ul class="text-xs text-slate-300 space-y-2 mb-4">
+                            <li><strong class="text-emerald-300">Promedio (Blur):</strong> Promedio aritmético puro del vecindario.</li>
+                            <li><strong class="text-emerald-300">Gaussiano:</strong> Los píxeles centrales tienen más "peso" que los alejados. Da un desenfoque más natural.</li>
+                            <li><strong class="text-emerald-300">Mediana:</strong> (No lineal). Excelente para eliminar ruido "sal y pimienta" (píxeles muertos o estática).</li>
+                            <li><strong class="text-emerald-300">Bilateral:</strong> Suaviza el ruido pero preserva los bordes afilados (muy pesado computacionalmente).</li>
+                        </ul>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-xs code-font text-slate-300">
+                            <p><span class="text-slate-500"># Filtro Gaussiano 5x5</span><br>blur = cv2.GaussianBlur(img, (5, 5), 0)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 3: Filtros Pasa Altas (Bordes) -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-amber-400 text-2xl mb-4"><i class="fa-solid fa-chart-line"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">3. Filtros Pasa Altas (Realce / Bordes)</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Detectan cambios bruscos de intensidad (gradientes) que matemáticamente corresponden a los bordes físicos de los objetos.
+                        </p>
+                        <ul class="text-xs text-slate-300 space-y-2 mb-4">
+                            <li><strong class="text-amber-300">Sobel / Scharr:</strong> Derivadas de primer orden. Detectan gradientes direccionales (Eje X o Eje Y).</li>
+                            <li><strong class="text-amber-300">Laplaciano:</strong> Derivada de segundo orden. Detecta bordes en todas las direcciones simultáneamente. Sensible al ruido (requiere suavizado previo).</li>
+                        </ul>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-xs code-font text-slate-300">
+                            <p><span class="text-slate-500"># Gradiente Direccional X (Bordes Verticales)</span><br>sobelx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 4: Morfología Matemática -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-pink-400 text-2xl mb-4"><i class="fa-solid fa-shapes"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">4. Operaciones Morfológicas</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Se aplican normalmente sobre imágenes binarizadas. Modifican la estructura geométrica de los objetos utilizando un "Elemento Estructurante".
+                        </p>
+                        <ul class="text-xs text-slate-300 space-y-2 mb-4">
+                            <li><strong class="text-pink-300">Erosión:</strong> Desgasta los límites del objeto. Útil para separar objetos pegados o eliminar ruido blanco.</li>
+                            <li><strong class="text-pink-300">Dilatación:</strong> Expande los límites. Útil para rellenar huecos negros dentro de un objeto blanco.</li>
+                        </ul>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-xs code-font text-slate-300">
+                            <p><span class="text-slate-500"># Dilatación geométrica</span><br>kernel = np.ones((5,5), np.uint8)<br>dilatacion = cv2.dilate(bin, kernel, iterations=1)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 2: SIMULADOR INTERACTIVO           -->
+        <!-- ========================================== -->
+        <section id="sec-simulador" class="hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- CONTROLES (IZQUIERDA) -->
+                <div class="lg:col-span-4 bg-slate-950 border border-slate-800 p-6 rounded-xl space-y-6">
+                    <div class="border-b border-slate-800 pb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-cyan-400"></i> Parámetros del Filtro
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">Simulador de algoritmos de convolución local.</p>
+                    </div>
+
+                    <!-- SELECCIÓN DE IMAGEN -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Imagen de Entrada</label>
+                        <select id="selImage" onchange="initSimulation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                            <option value="factory">Pieza Industrial (Normal)</option>
+                            <option value="noisy">Ruido Sal y Pimienta</option>
+                            <option value="shadow">Iluminación Irregular</option>
+                            <option value="edges">Patrón Geométrico</option>
+                        </select>
+                    </div>
+
+                    <!-- SELECTOR DE CATEGORÍA DE FILTRO -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Categoría</label>
+                        <select id="selCategory" onchange="updateSubCategories(); updateUIControls();" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                            <option value="threshold">1. Umbralización (Binarización)</option>
+                            <option value="lowpass">2. Pasa Bajas (Suavizado/Blur)</option>
+                            <option value="highpass">3. Pasa Altas (Detección Bordes)</option>
+                            <option value="morphology">4. Morfológicos</option>
+                        </select>
+                    </div>
+
+                    <!-- SELECTOR DEL FILTRO ESPECÍFICO -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Algoritmo</label>
+                        <select id="selMethod" onchange="updateUIControls()" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 transition">
+                            <!-- Llenado dinámicamente por JS -->
+                        </select>
+                    </div>
+
+                    <!-- CONTROLES DINÁMICOS -->
+                    <div id="dynamicParams" class="border-t border-slate-800 pt-4 space-y-4 min-h-[120px]">
+                        
+                        <!-- Contenedor Slider 1 (Umbral T o Kernel Size) -->
+                        <div id="paramBox1" class="space-y-1 hidden">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span id="labelParam1" class="text-slate-400">Parámetro 1:</span>
+                                <span id="valParam1" class="text-cyan-400">0</span>
+                            </div>
+                            <input type="range" id="rngParam1" min="1" max="255" step="1" value="127" oninput="updateUIControls()" class="w-full accent-cyan-500 bg-slate-800 rounded-lg appearance-none h-1.5 cursor-pointer">
+                        </div>
+
+                        <!-- Contenedor Slider 2 (Constante C Adaptativo) -->
+                        <div id="paramBox2" class="space-y-1 hidden">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span id="labelParam2" class="text-slate-400">Parámetro 2:</span>
+                                <span id="valParam2" class="text-cyan-400">0</span>
+                            </div>
+                            <input type="range" id="rngParam2" min="-20" max="20" step="1" value="2" oninput="updateUIControls()" class="w-full accent-cyan-500 bg-slate-800 rounded-lg appearance-none h-1.5 cursor-pointer">
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- CANVAS & CODIGO (DERECHA) -->
+                <div class="lg:col-span-8 flex flex-col gap-6">
+                    
+                    <!-- PANEL DE PREVISUALIZACIÓN -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 md:p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider"><i class="fa-solid fa-microchip text-emerald-400 mr-2"></i>Renderizado por Convolución (JS)</h3>
+                            <span id="processingTime" class="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 font-mono">Tiempo: 0ms</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch justify-center">
+                            <!-- Imagen Entrada -->
+                            <div class="flex flex-col items-center bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                                <span class="text-xs font-mono text-slate-400 mb-3 uppercase tracking-widest font-bold">Input Image</span>
+                                <canvas id="canvas-in" width="256" height="256" class="bg-black rounded border border-slate-700 w-full max-w-[256px] object-contain aspect-square image-rendering-pixelated"></canvas>
+                            </div>
+
+                            <!-- Imagen Salida -->
+                            <div class="flex flex-col items-center bg-slate-900/50 p-4 rounded-lg border-2 border-cyan-500/40 relative">
+                                <span class="text-xs font-mono text-cyan-400 mb-2 uppercase tracking-widest font-bold">Output Filtered</span>
+                                <canvas id="canvas-out" width="256" height="256" class="bg-black rounded border border-slate-700 w-full max-w-[256px] object-contain aspect-square image-rendering-pixelated"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GENERADOR DE CODIGO PYTHON -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex-grow">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-brands fa-python text-yellow-400"></i> Equivalente en Python OpenCV
+                            </h3>
+                            <button onclick="copyCode('generated-code-pre')" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-copy"></i> Copiar Código
+                            </button>
+                        </div>
+                        <div class="relative h-full">
+                            <pre id="generated-code-pre" class="text-xs md:text-sm bg-slate-900 p-4 rounded-xl border border-slate-800 text-slate-300 overflow-x-auto code-font min-h-[150px]"></pre>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 3: DESAFÍOS MECTRÓNICOS            -->
+        <!-- ========================================== -->
+        <section id="sec-desafios" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-violet-900/30 via-slate-900 to-slate-900 border border-violet-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-violet-400 font-mono text-xs uppercase tracking-widest font-semibold">Evaluación Mecatrónica</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Retos Prácticos de Programación</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm">
+                        Resuelve los siguientes retos usando tu entorno local de Python con OpenCV. Al terminar la práctica, entrega un reporte técnico demostrando la efectividad de tus algoritmos de visión.
+                    </p>
+                </div>
+            </div>
+
+            <!-- RETOS -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Reto 1 -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">Dificultad: Media</span>
+                            <i class="fa-solid fa-id-card text-slate-600 text-xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2">Desafío 1: Preprocesamiento OCR para Credencial</h4>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Implementa un pipeline de filtros de umbral y pasa bajas con el objetivo de segmentar nítidamente el texto de una credencial escolar. Esta imagen será la entrada a un motor de Reconocimiento Óptico de Caracteres (OCR).
+                        </p>
+                        
+                        <div class="space-y-2 text-xs text-slate-300 bg-slate-900 p-3 rounded border border-slate-800">
+                            <p class="font-bold text-slate-200">Requerimientos:</p>
+                            <ul class="list-disc pl-4 space-y-1">
+                                <li>Aplica un <strong>filtro pasa bajas</strong> (Gaussiano o Blur) para atenuar la textura de fondo y el ruido de la credencial sin destruir la morfología de las letras.</li>
+                                <li>Utiliza <strong>umbralización adaptativa</strong> (<code class="text-amber-400 font-mono">cv2.adaptiveThreshold</code>) en lugar de umbralización global, para aislar el texto oscuro contrarrestando las sombras y la iluminación irregular del escaneo.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reto 2 -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-mono bg-red-500/10 text-red-300 border border-red-500/20 px-2 py-0.5 rounded">Dificultad: Avanzada</span>
+                            <i class="fa-solid fa-gear text-slate-600 text-xl"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white mb-2">Desafío 2: Inspección de Engranaje Metálico</h4>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Binariza una imagen de un engranaje metálico industrial. Debido a los reflejos especulares del metal, la binarización inicial generará imperfecciones como huecos negros internos y contornos fragmentados o dobles.
+                        </p>
+                        
+                        <div class="space-y-2 text-xs text-slate-300 bg-slate-900 p-3 rounded border border-slate-800 mb-6">
+                            <p class="font-bold text-slate-200">Requerimientos:</p>
+                            <ul class="list-disc pl-4 space-y-1">
+                                <li>Encuentra el umbral óptimo de binarización inicial usando el algoritmo de <strong>Otsu</strong>.</li>
+                                <li>Aplica operaciones morfológicas de <strong>Cierre</strong> (Dilatación seguida de Erosión, <code class="text-red-400 font-mono">cv2.MORPH_CLOSE</code>) para fusionar los contornos dobles y tapar los huecos generados por los brillos del material.</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Botón de descarga para el alumno -->
+                        <a href="https://raw.githubusercontent.com/opencv/opencv/master/samples/data/smarties.png" download="engranaje_prueba.png" class="mt-auto block w-full text-center px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm text-cyan-400 font-bold transition">
+                            <i class="fa-solid fa-download mr-2"></i> Descargar Imagen de Prueba
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 bg-slate-950 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p class="text-xs text-slate-400">Universidad Politécnica - Área de Mecatrónica y Visión por Computadora</p>
+            <p class="text-[10px] text-slate-600">Diseñado para la enseñanza de Convolución Matricial Local. OpenCV + JS.</p>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE CONTROL DEL SIMULADOR & RENDERING JS -->
+    <script>
+        // Inicialización de Lucide Icons
+        lucide.createIcons();
+
+        // Referencias a Canvas y Contextos
+        const canvasIn = document.getElementById('canvas-in');
+        const canvasOut = document.getElementById('canvas-out');
+        const ctxIn = canvasIn.getContext('2d', { willReadFrequently: true });
+        const ctxOut = canvasOut.getContext('2d');
+        
+        const IMG_SIZE = 256;
+        let originalPixels = new Uint8Array(IMG_SIZE * IMG_SIZE);
+
+        // Estructura de Métodos de Filtrado
+        const filterDict = {
+            'threshold': [
+                {id: 'thresh_simple', name: 'Umbral Simple (Fijo)'},
+                {id: 'thresh_otsu', name: 'Algoritmo de Otsu'},
+                {id: 'thresh_adapt', name: 'Adaptativo (Media local)'}
+            ],
+            'lowpass': [
+                {id: 'blur_mean', name: 'Promedio Simple (Blur)'},
+                {id: 'blur_gauss', name: 'Filtro Gaussiano'},
+                {id: 'blur_median', name: 'Filtro Mediana (No lineal)'}
+            ],
+            'highpass': [
+                {id: 'edge_sobelx', name: 'Sobel (Derivada Eje X)'},
+                {id: 'edge_sobely', name: 'Sobel (Derivada Eje Y)'},
+                {id: 'edge_laplace', name: 'Laplaciano (2da Derivada)'}
+            ],
+            'morphology': [
+                {id: 'morph_erode', name: 'Erosión'},
+                {id: 'morph_dilate', name: 'Dilatación'}
+            ]
+        };
+
+        // Cambiar entre pestañas
+        function switchTab(tabName) {
+            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            if (activeBtn) {
+                if (tabName === 'teoria') activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition";
+                else if (tabName === 'simulador') activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition";
+                else if (tabName === 'desafios') activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-violet-600 text-white transition";
+            }
+
+            if (tabName === 'simulador') setTimeout(initSimulation, 50);
+        }
+
+        // Utils UI
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            toast.className = toast.className.replace('translate-y-20 opacity-0', 'translate-y-0 opacity-100');
+            setTimeout(() => {
+                toast.className = toast.className.replace('translate-y-0 opacity-100', 'translate-y-20 opacity-0');
+            }, 3000);
+        }
+
+        function copyCode(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => showToast('¡Código Python copiado!')).catch(err => {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                showToast('¡Código Python copiado!');
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // ==========================================
+        // CONFIGURACIÓN DE UI DE SIMULACIÓN
+        // ==========================================
+
+        window.onload = () => {
+            updateSubCategories();
+            initSimulation();
+        };
+
+        function updateSubCategories() {
+            const cat = document.getElementById('selCategory').value;
+            const selMethod = document.getElementById('selMethod');
+            selMethod.innerHTML = '';
+            
+            filterDict[cat].forEach(method => {
+                let opt = document.createElement('option');
+                opt.value = method.id;
+                opt.textContent = method.name;
+                selMethod.appendChild(opt);
+            });
+        }
+
+        function initSimulation() {
+            const type = document.getElementById('selImage').value;
+            generarImagen(type);
+            updateUIControls();
+        }
+
+        // Generador Procedural de Imágenes Analíticas
+        function generarImagen(type) {
+            for (let y = 0; y < IMG_SIZE; y++) {
+                for (let x = 0; x < IMG_SIZE; x++) {
+                    let val = 0;
+                    const idx = y * IMG_SIZE + x;
+                    
+                    if (type === 'factory') {
+                        // Simular una tuerca/pieza
+                        let dist = Math.sqrt(Math.pow(x-128, 2) + Math.pow(y-128, 2));
+                        if(dist > 50 && dist < 90) val = 180; // Cuerpo pieza
+                        else if (dist <= 50) val = 60; // Agujero interior
+                        else val = 100; // Banda transportadora
+                        // Textura ligera
+                        val += (Math.random() * 20 - 10);
+                    } 
+                    else if (type === 'noisy') {
+                        // Patrón geométrico + Sal y Pimienta
+                        val = (Math.floor(x / 32) % 2 === Math.floor(y / 32) % 2) ? 200 : 50;
+                        let r = Math.random();
+                        if (r < 0.05) val = 0; // Pimienta
+                        else if (r > 0.95) val = 255; // Sal
+                    } 
+                    else if (type === 'shadow') {
+                        // Iluminación irregular gradiente + Objeto constante
+                        let gradienteLuz = x;
+                        val = (y > 100 && y < 156 && x > 50 && x < 200) ? 50 : 200; // Barra central
+                        val = Math.max(0, val - (255 - gradienteLuz));
+                    } 
+                    else if (type === 'edges') {
+                        // Formas afiladas para Sobel
+                        val = 40;
+                        if (x > 40 && x < 100 && y > 40 && y < 200) val = 200; // Rectángulo vertical
+                        if (x > 150 && x < 220 && y > 100 && y < 150) val = 220; // Rect horizontal
+                        val += Math.random()*5; // Ligero ruido
+                    }
+
+                    originalPixels[idx] = Math.floor(Math.max(0, Math.min(255, val)));
+                }
+            }
+            renderCanvas(ctxIn, originalPixels);
+        }
+
+        function updateUIControls() {
+            const method = document.getElementById('selMethod').value;
+            const cat = document.getElementById('selCategory').value;
+            
+            const box1 = document.getElementById('paramBox1');
+            const rng1 = document.getElementById('rngParam1');
+            const lbl1 = document.getElementById('labelParam1');
+            const val1 = document.getElementById('valParam1');
+
+            const box2 = document.getElementById('paramBox2');
+            const rng2 = document.getElementById('rngParam2');
+            const lbl2 = document.getElementById('labelParam2');
+            const val2 = document.getElementById('valParam2');
+
+            // Reset visibility
+            box1.classList.add('hidden');
+            box2.classList.add('hidden');
+
+            // Configure UI based on Category/Method
+            if (cat === 'threshold') {
+                if (method === 'thresh_simple') {
+                    box1.classList.remove('hidden');
+                    lbl1.innerText = "Umbral Global (T):";
+                    rng1.min = 0; rng1.max = 255; rng1.step = 1;
+                    val1.innerText = rng1.value;
+                } else if (method === 'thresh_adapt') {
+                    box1.classList.remove('hidden'); box2.classList.remove('hidden');
+                    lbl1.innerText = "Tamaño Bloque (ksize):";
+                    rng1.min = 3; rng1.max = 31; rng1.step = 2; // Impar
+                    val1.innerText = rng1.value;
+                    lbl2.innerText = "Constante (C):";
+                    val2.innerText = rng2.value;
+                }
+            } 
+            else if (cat === 'lowpass' || cat === 'morphology') {
+                box1.classList.remove('hidden');
+                lbl1.innerText = "Tamaño de Kernel (ksize x ksize):";
+                rng1.min = 3; rng1.max = 15; rng1.step = 2;
+                val1.innerText = rng1.value;
+            }
+            else if (cat === 'highpass') {
+                box1.classList.remove('hidden');
+                lbl1.innerText = "Tamaño Apertura (ksize):";
+                rng1.min = 3; rng1.max = 7; rng1.step = 2;
+                val1.innerText = rng1.value;
+            }
+
+            // Trigger Engine
+            ejecutarPipelineAlgoritmos();
+        }
+
+        // ==========================================
+        // MOTOR MATEMÁTICO DE FILTRADO Y CONVOLUCIÓN
+        // ==========================================
+
+        function ejecutarPipelineAlgoritmos() {
+            const method = document.getElementById('selMethod').value;
+            const p1 = parseInt(document.getElementById('rngParam1').value);
+            const p2 = parseInt(document.getElementById('rngParam2').value);
+            
+            let resultPixels = new Uint8Array(IMG_SIZE * IMG_SIZE);
+            let pyCode = `import cv2\nimport numpy as np\n\nimg = cv2.imread('sensor.jpg', 0)\n\n`;
+
+            const t0 = performance.now();
+
+            switch(method) {
+                case 'thresh_simple':
+                    resultPixels = applySimpleThreshold(originalPixels, p1);
+                    pyCode += `# Binarización Simple Fija\n_, resultado = cv2.threshold(img, ${p1}, 255, cv2.THRESH_BINARY)`;
+                    break;
+                case 'thresh_otsu':
+                    let t_opt = calculateOtsuThreshold(originalPixels);
+                    resultPixels = applySimpleThreshold(originalPixels, t_opt);
+                    pyCode += `# Binarización Automática de Otsu\n_, resultado = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)\n# OpenCV encontró el umbral óptimo: T=${t_opt}`;
+                    break;
+                case 'thresh_adapt':
+                    resultPixels = applyAdaptiveThreshold(originalPixels, p1, p2);
+                    pyCode += `# Binarización Adaptativa (Media de bloque ${p1}x${p1} menos C=${p2})\nresultado = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, ${p1}, ${p2})`;
+                    break;
+                case 'blur_mean':
+                    resultPixels = applyBlur(originalPixels, p1);
+                    pyCode += `# Filtro Pasa Bajas: Promedio ${p1}x${p1}\nresultado = cv2.blur(img, (${p1}, ${p1}))`;
+                    break;
+                case 'blur_gauss':
+                    resultPixels = applyGaussianBlur(originalPixels, p1);
+                    pyCode += `# Filtro Pasa Bajas: Gaussiano ${p1}x${p1}\nresultado = cv2.GaussianBlur(img, (${p1}, ${p1}), 0)`;
+                    break;
+                case 'blur_median':
+                    resultPixels = applyMedianFilter(originalPixels, p1);
+                    pyCode += `# Filtro No Lineal: Mediana (Óptimo para Ruido Sal y Pimienta)\nresultado = cv2.medianBlur(img, ${p1})`;
+                    break;
+                case 'edge_sobelx':
+                    resultPixels = applySobel(originalPixels, p1, 'x');
+                    pyCode += `# Filtro Pasa Altas: Gradiente Direccional X (Bordes Verticales)\nsobelx = cv2.Sobel(img, cv2.CV_64F, dx=1, dy=0, ksize=${p1})\nresultado = cv2.convertScaleAbs(sobelx)`;
+                    break;
+                case 'edge_sobely':
+                    resultPixels = applySobel(originalPixels, p1, 'y');
+                    pyCode += `# Filtro Pasa Altas: Gradiente Direccional Y (Bordes Horizontales)\nsobely = cv2.Sobel(img, cv2.CV_64F, dx=0, dy=1, ksize=${p1})\nresultado = cv2.convertScaleAbs(sobely)`;
+                    break;
+                case 'edge_laplace':
+                    resultPixels = applyLaplacian(originalPixels, p1);
+                    pyCode += `# Filtro Pasa Altas: Laplaciano (2da Derivada / Omnidireccional)\nlaplacian = cv2.Laplacian(img, cv2.CV_64F, ksize=${p1})\nresultado = cv2.convertScaleAbs(laplacian)`;
+                    break;
+                case 'morph_erode':
+                    resultPixels = applyMorphology(originalPixels, p1, 'erode');
+                    pyCode += `# Operación Morfológica: Erosión\nkernel = np.ones((${p1}, ${p1}), np.uint8)\nresultado = cv2.erode(img, kernel, iterations=1)`;
+                    break;
+                case 'morph_dilate':
+                    resultPixels = applyMorphology(originalPixels, p1, 'dilate');
+                    pyCode += `# Operación Morfológica: Dilatación\nkernel = np.ones((${p1}, ${p1}), np.uint8)\nresultado = cv2.dilate(img, kernel, iterations=1)`;
+                    break;
+            }
+
+            const t1 = performance.now();
+            document.getElementById('processingTime').innerText = `Tiempo CPU: ${(t1 - t0).toFixed(1)}ms`;
+
+            pyCode += `\n\ncv2.imshow('Salida Filtrada', resultado)\ncv2.waitKey(0)`;
+            document.getElementById('generated-code-pre').innerText = pyCode;
+            
+            renderCanvas(ctxOut, resultPixels);
+        }
+
+        // --- ALGORITMOS NATIVOS ---
+        
+        function applySimpleThreshold(pixels, T) {
+            let out = new Uint8Array(pixels.length);
+            for(let i=0; i<pixels.length; i++) out[i] = pixels[i] > T ? 255 : 0;
+            return out;
+        }
+
+        function calculateOtsuThreshold(pixels) {
+            let hist = new Int32Array(256);
+            for(let i=0; i<pixels.length; i++) hist[pixels[i]]++;
+            let total = pixels.length;
+            let sum = 0;
+            for(let i=0; i<256; i++) sum += i * hist[i];
+            
+            let sumB = 0, wB = 0, wF = 0, maxVar = 0, threshold = 0;
+            for(let i=0; i<256; i++) {
+                wB += hist[i];
+                if (wB == 0) continue;
+                wF = total - wB;
+                if (wF == 0) break;
+                sumB += i * hist[i];
+                let mB = sumB / wB;
+                let mF = (sum - sumB) / wF;
+                let varBetween = wB * wF * Math.pow(mB - mF, 2);
+                if (varBetween > maxVar) { maxVar = varBetween; threshold = i; }
+            }
+            return threshold;
+        }
+
+        function applyAdaptiveThreshold(pixels, size, C) {
+            let out = new Uint8Array(pixels.length);
+            let half = Math.floor(size/2);
+            // Implementación naiive (Para educación 256x256 es suficientemente rápido)
+            for(let y=0; y<IMG_SIZE; y++) {
+                for(let x=0; x<IMG_SIZE; x++) {
+                    let sum = 0, count = 0;
+                    for(let ky=-half; ky<=half; ky++) {
+                        for(let kx=-half; kx<=half; kx++) {
+                            let ny = y + ky, nx = x + kx;
+                            if(ny>=0 && ny<IMG_SIZE && nx>=0 && nx<IMG_SIZE) {
+                                sum += pixels[ny*IMG_SIZE + nx];
+                                count++;
+                            }
+                        }
+                    }
+                    let mean = sum/count;
+                    out[y*IMG_SIZE + x] = pixels[y*IMG_SIZE + x] > (mean - C) ? 255 : 0;
+                }
+            }
+            return out;
+        }
+
+        function applyConvolution(pixels, kernel, size, divisor, offset=0, absolute=false) {
+            let out = new Uint8Array(pixels.length);
+            let half = Math.floor(size/2);
+            for(let y=0; y<IMG_SIZE; y++) {
+                for(let x=0; x<IMG_SIZE; x++) {
+                    let sum = 0;
+                    for(let ky=-half; ky<=half; ky++) {
+                        for(let kx=-half; kx<=half; kx++) {
+                            // Boundary clamp (replice border)
+                            let ny = Math.min(Math.max(y + ky, 0), IMG_SIZE-1);
+                            let nx = Math.min(Math.max(x + kx, 0), IMG_SIZE-1);
+                            let kVal = kernel[(ky+half)*size + (kx+half)];
+                            sum += pixels[ny*IMG_SIZE + nx] * kVal;
+                        }
+                    }
+                    let res = (sum / divisor) + offset;
+                    if (absolute) res = Math.abs(res);
+                    out[y*IMG_SIZE + x] = Math.min(Math.max(res, 0), 255);
+                }
+            }
+            return out;
+        }
+
+        function applyBlur(pixels, size) {
+            let kernel = new Float32Array(size*size).fill(1);
+            return applyConvolution(pixels, kernel, size, size*size);
+        }
+
+        function applyGaussianBlur(pixels, size) {
+            // Aproximación de kernel Gaussiano para simplificar código JS (Triángulo de pascal aproximado)
+            // Para la demo, usar convolución múltiple con box filter equivale a Gaussiana, o generar matrix.
+            // Generemos kernel dinámico real (Sigma prop a size)
+            let sigma = 0.3 * ((size - 1) * 0.5 - 1) + 0.8;
+            let kernel = new Float32Array(size*size);
+            let half = Math.floor(size/2);
+            let sum = 0;
+            for(let y=-half; y<=half; y++) {
+                for(let x=-half; x<=half; x++) {
+                    let w = Math.exp(-(x*x + y*y)/(2*sigma*sigma));
+                    kernel[(y+half)*size + (x+half)] = w;
+                    sum += w;
+                }
+            }
+            return applyConvolution(pixels, kernel, size, sum);
+        }
+
+        function applyMedianFilter(pixels, size) {
+            let out = new Uint8Array(pixels.length);
+            let half = Math.floor(size/2);
+            for(let y=0; y<IMG_SIZE; y++) {
+                for(let x=0; x<IMG_SIZE; x++) {
+                    let window = [];
+                    for(let ky=-half; ky<=half; ky++) {
+                        for(let kx=-half; kx<=half; kx++) {
+                            let ny = Math.min(Math.max(y + ky, 0), IMG_SIZE-1);
+                            let nx = Math.min(Math.max(x + kx, 0), IMG_SIZE-1);
+                            window.push(pixels[ny*IMG_SIZE + nx]);
+                        }
+                    }
+                    window.sort((a,b)=>a-b);
+                    out[y*IMG_SIZE + x] = window[Math.floor(window.length/2)];
+                }
+            }
+            return out;
+        }
+
+        function applySobel(pixels, size, dir) {
+            // Simplificación usando k=3
+            let kx = [-1,0,1, -2,0,2, -1,0,1];
+            let ky = [-1,-2,-1, 0,0,0, 1,2,1];
+            // Para k>3 se usan matrices separables de mayor tamaño, en la demo restringiremos kernel real a 3 para visualización, o escalamos
+            let kernel = dir === 'x' ? kx : ky;
+            return applyConvolution(pixels, kernel, 3, 1, 0, true);
+        }
+
+        function applyLaplacian(pixels, size) {
+            let k = [0,1,0, 1,-4,1, 0,1,0];
+            return applyConvolution(pixels, k, 3, 1, 0, true);
+        }
+
+        function applyMorphology(pixels, size, type) {
+            let out = new Uint8Array(pixels.length);
+            let half = Math.floor(size/2);
+            for(let y=0; y<IMG_SIZE; y++) {
+                for(let x=0; x<IMG_SIZE; x++) {
+                    let extreme = type === 'erode' ? 255 : 0;
+                    for(let ky=-half; ky<=half; ky++) {
+                        for(let kx=-half; kx<=half; kx++) {
+                            let ny = Math.min(Math.max(y + ky, 0), IMG_SIZE-1);
+                            let nx = Math.min(Math.max(x + kx, 0), IMG_SIZE-1);
+                            let val = pixels[ny*IMG_SIZE + nx];
+                            if (type === 'erode') extreme = Math.min(extreme, val);
+                            else extreme = Math.max(extreme, val);
+                        }
+                    }
+                    out[y*IMG_SIZE + x] = extreme;
+                }
+            }
+            return out;
+        }
+
+        // Renderizado Final en Canvas
+        function renderCanvas(ctx, pixels) {
+            let imgData = ctx.createImageData(IMG_SIZE, IMG_SIZE);
+            for (let i = 0; i < pixels.length; i++) {
+                imgData.data[i*4] = pixels[i];
+                imgData.data[i*4+1] = pixels[i];
+                imgData.data[i*4+2] = pixels[i];
+                imgData.data[i*4+3] = 255;
+            }
+            ctx.putImageData(imgData, 0, 0);
+        }
+
+        // Verificador de Desafíos
+        function verificarRespuesta(pregunta, opcion) {
+            const feed = document.getElementById(`feedback${pregunta}`);
+            feed.classList.remove('hidden');
+            
+            ['A', 'B', 'C'].forEach(letra => {
+                let btn = document.getElementById(`btn${pregunta}${letra}`);
+                btn.classList.remove('bg-emerald-900/40', 'border-emerald-500', 'bg-rose-900/40', 'border-rose-500');
+                btn.classList.add('bg-slate-900', 'border-slate-700');
+            });
+
+            const btnSel = document.getElementById(`btn${pregunta}${opcion}`);
+            btnSel.classList.remove('bg-slate-900', 'border-slate-700');
+
+            if (pregunta === 1) {
+                if (opcion === 'C') {
+                    btnSel.classList.add('bg-emerald-900/40', 'border-emerald-500');
+                    feed.className = "mt-4 text-sm p-3 rounded-lg bg-emerald-950/50 border border-emerald-500/50 text-emerald-400 block";
+                    feed.innerHTML = "<strong>¡Correcto!</strong> El filtro Mediana (no lineal) es excelente para ruido impulsivo. Al ordenar los píxeles locales, el blanco extremo (255) y el negro extremo (0) quedan en los bordes del arreglo, seleccionando siempre el valor central que corresponderá a la textura real de la pieza.";
+                } else {
+                    btnSel.classList.add('bg-rose-900/40', 'border-rose-500');
+                    feed.className = "mt-4 text-sm p-3 rounded-lg bg-rose-950/50 border border-rose-500/50 text-rose-400 block";
+                    feed.innerHTML = "<strong>Incorrecto.</strong> El blur promedio solo difuminará el punto blanco haciéndolo una mancha gris, pero no lo elimina. El Laplaciano lo resaltará aún más identificándolo como un borde.";
+                }
+            } else if (pregunta === 2) {
+                if (opcion === 'A') {
+                    btnSel.classList.add('bg-emerald-900/40', 'border-emerald-500');
+                    feed.className = "mt-4 text-sm p-3 rounded-lg bg-emerald-950/50 border border-emerald-500/50 text-emerald-400 block";
+                    feed.innerHTML = "<strong>¡Excelente!</strong> La Dilatación expande los píxeles blancos (valor máximo) hacia los oscuros. Si el hueco negro es pequeño comparado con el Kernel, la zona blanca invadirá y rellenará ese hueco negro.";
+                } else {
+                    btnSel.classList.add('bg-rose-900/40', 'border-rose-500');
+                    feed.className = "mt-4 text-sm p-3 rounded-lg bg-rose-950/50 border border-rose-500/50 text-rose-400 block";
+                    feed.innerHTML = "<strong>Revisa la morfología.</strong> La erosión (mínimo local) hace que los píxeles negros invadan a los blancos, por lo que haría que esos huecos se volvieran gigantes y destruyeran el engranaje.";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
