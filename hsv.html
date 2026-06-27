@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica Interactiva: Espacio HSV y Tracking - OpenCV & Python</title>
+    
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- MathJax para fórmulas matemáticas LaTeX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #06b6d4;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
+
+        /* Hue Gradient Track */
+        .hue-track::-webkit-slider-runnable-track {
+            background: linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%);
+        }
+        /* Saturation Gradient Track */
+        .sat-track::-webkit-slider-runnable-track {
+            background: linear-gradient(to right, #808080, #00ffff);
+        }
+        /* Value Gradient Track */
+        .val-track::-webkit-slider-runnable-track {
+            background: linear-gradient(to right, #000000, #00ffff);
+        }
+
+        /* CSS para el Cono HSV */
+        .hsv-wheel {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: conic-gradient(red, magenta, blue, cyan, lime, yellow, red);
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .hsv-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle closest-side, white 0%, transparent 100%);
+            mix-blend-mode: screen;
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Navegación Superior -->
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="../index.html" class="text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-2 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Panel Principal
+                </a>
+                <div class="h-4 w-px bg-slate-700"></div>
+                <span class="text-cyan-400 font-bold uppercase tracking-widest text-xs">Visión Artificial</span>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-md">
+                <i data-lucide="book-open" class="w-4 h-4 text-purple-400"></i>
+                <span class="text-xs font-mono text-slate-300">Práctica_04.py</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HEADER / BARRA DE PESTAÑAS -->
+    <header class="border-b border-slate-800 bg-slate-950 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-cyan-600/20 text-cyan-400 rounded-lg border border-cyan-500/30">
+                    <i data-lucide="palette" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Guía de Visión Artificial <span class="text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono">OpCV-104</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Práctica de Laboratorio: Espacio HSV y Color Tracking</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchTab('teoria')" id="tab-teoria" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition">
+                    <i class="fa-solid fa-book mr-2"></i>Guía & Teoría
+                </button>
+                <button onclick="switchTab('simulador')" id="tab-simulador" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-sliders mr-2"></i>Simulador OpenCV
+                </button>
+                <button onclick="switchTab('desafios')" id="tab-desafios" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-video mr-2"></i>Desafíos en Tiempo Real
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- NOTIFICACIÓN FLOTANTE (TOAST) -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toast-msg">¡Código copiado al portapapeles!</span>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 1: GUÍA & TEORÍA                   -->
+        <!-- ========================================== -->
+        <section id="sec-teoria" class="space-y-8">
+            <div class="bg-gradient-to-r from-cyan-900/30 via-slate-900 to-slate-900 border border-cyan-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-cyan-400 font-mono text-xs uppercase tracking-widest font-semibold">Modelos de Representación del Color</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">¿Por qué el RGB falla en Robótica?</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                        En ingeniería mecatrónica a menudo necesitamos que un sistema identifique una pieza por su color (ej. "clasificar tapas rojas"). Si usamos el espacio de color <strong>RGB (Red, Green, Blue)</strong>, una simple sombra o cambio de iluminación alterará los tres canales simultáneamente, rompiendo nuestro algoritmo. 
+                        <br><br>
+                        La solución es convertir la imagen al espacio cilíndrico <strong>HSV (Hue, Saturation, Value)</strong>, el cual aísla el color real de la intensidad lumínica.
+                    </p>
+                </div>
+            </div>
+
+            <!-- TEORÍA DEL CONO HSV -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                
+                <!-- Explicación Visual -->
+                <div class="lg:col-span-5 bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col items-center justify-center text-center">
+                    <h3 class="text-lg font-bold text-white mb-6">El Cono del Espacio HSV</h3>
+                    
+                    <!-- Representación CSS del Cilindro/Cono HSV -->
+                    <div class="relative w-48 h-48 mb-8 perspective-1000">
+                        <div class="hsv-wheel absolute inset-0 m-auto rotate-12 transform-gpu">
+                            <div class="hsv-center"></div>
+                        </div>
+                        <!-- Eje de Valor (Brillo) -->
+                        <div class="absolute top-1/2 left-1/2 w-1 h-32 bg-gradient-to-t from-black to-white transform -translate-x-1/2 -translate-y-full z-10 shadow-lg"></div>
+                        <span class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-6 text-xs font-mono text-slate-300 font-bold border border-slate-700 bg-slate-900 px-2 py-1 rounded">V (Brillo)</span>
+                    </div>
+
+                    <p class="text-xs text-slate-400 mt-4 max-w-xs leading-relaxed">
+                        El color puro gira alrededor del círculo (H). La cantidad de color (S) va del centro al borde. La iluminación (V) es un eje vertical que va del negro (abajo) al color máximo (arriba).
+                    </p>
+                </div>
+
+                <!-- Detalles de Canales -->
+                <div class="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                        <div class="text-cyan-400 text-xl mb-3"><i class="fa-solid fa-palette"></i></div>
+                        <h4 class="font-bold text-white mb-2">H: Matiz (Hue)</h4>
+                        <p class="text-xs text-slate-400 mb-3">Define el color puro o pigmento (Rojo, Verde, Azul, etc.). Se representa como un ángulo en el cilindro.</p>
+                        <div class="p-2 bg-rose-950/30 border border-rose-500/30 rounded text-xs text-rose-300 font-bold mb-1">
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> ¡Trampa de OpenCV!
+                        </div>
+                        <p class="text-[11px] text-slate-500">
+                            En teoría H va de 0° a 360°. Para que quepa en un byte (8 bits max 255), OpenCV divide el ángulo a la mitad. <strong>En OpenCV, H va de 0 a 179.</strong>
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                        <div class="text-purple-400 text-xl mb-3"><i class="fa-solid fa-droplet"></i></div>
+                        <h4 class="font-bold text-white mb-2">S: Saturación (Saturation)</h4>
+                        <p class="text-xs text-slate-400 mb-2">Define la pureza o intensidad del color. Va desde el gris/blanco descolorido (0) hasta el color vívido puro (255).</p>
+                        <div class="h-2 w-full rounded bg-gradient-to-r from-gray-400 to-purple-500 mb-1"></div>
+                        <div class="flex justify-between text-[10px] font-mono text-slate-500"><span>0 (Gris)</span><span>255 (Puro)</span></div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 md:col-span-2 flex items-center gap-4">
+                        <div class="text-amber-400 text-3xl"><i class="fa-solid fa-sun"></i></div>
+                        <div>
+                            <h4 class="font-bold text-white mb-1">V: Valor (Value / Brillo)</h4>
+                            <p class="text-xs text-slate-400">Representa la intensidad de la luz que ilumina la pieza. 0 es negro absoluto (oscuridad) y 255 es el brillo máximo (luz plena).</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- CÓDIGO BÁSICO PYTHON -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fa-brands fa-python text-yellow-500 text-xl"></i>
+                    <h3 class="text-lg font-semibold text-white">Extracción de un color mediante InRange</h3>
+                </div>
+                <div class="relative group">
+                    <button onclick="copyCode('init-python-code')" class="absolute top-3 right-3 bg-slate-800 hover:bg-slate-700 text-xs px-2.5 py-1.5 rounded text-slate-300 border border-slate-700 transition flex items-center gap-1">
+                        <i class="fa-solid fa-copy"></i> Copiar
+                    </button>
+                    <pre id="init-python-code" class="text-xs md:text-sm bg-slate-900 p-4 rounded-xl border border-slate-800 text-slate-300 overflow-x-auto code-font">
+<span class="text-slate-500"># -*- coding: utf-8 -*-</span>
+<span class="text-purple-400">import</span> cv2
+<span class="text-purple-400">import</span> numpy <span class="text-purple-400">as</span> np
+
+img = cv2.imread(<span class="text-emerald-400">'piezas.jpg'</span>)
+
+<span class="text-slate-500"># 1. Convertir imagen BGR (Default OpenCV) a HSV</span>
+hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+<span class="text-slate-500"># 2. Definir los límites del color Azul (H~120)</span>
+<span class="text-slate-500"># Orden: [Hue (0-179), Saturation (0-255), Value (0-255)]</span>
+limite_inferior = np.array([<span class="text-amber-400">100</span>, <span class="text-amber-400">150</span>, <span class="text-amber-400">50</span>])
+limite_superior = np.array([<span class="text-amber-400">140</span>, <span class="text-amber-400">255</span>, <span class="text-amber-400">255</span>])
+
+<span class="text-slate-500"># 3. Crear máscara binaria (Píxeles dentro del rango = 255, resto = 0)</span>
+mascara = cv2.inRange(hsv, limite_inferior, limite_superior)
+
+<span class="text-slate-500"># 4. Operación BITWISE AND para mostrar el color original extraído</span>
+resultado = cv2.bitwise_and(img, img, mask=mascara)
+
+cv2.imshow(<span class="text-emerald-400">'Original'</span>, img)
+cv2.imshow(<span class="text-emerald-400">'Mascara Binaria'</span>, mascara)
+cv2.imshow(<span class="text-emerald-400">'Piezas Azules'</span>, resultado)
+cv2.waitKey(<span class="text-amber-400">0</span>)</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 2: SIMULADOR INTERACTIVO           -->
+        <!-- ========================================== -->
+        <section id="sec-simulador" class="hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- CONTROLES (IZQUIERDA) -->
+                <div class="lg:col-span-4 bg-slate-950 border border-slate-800 p-6 rounded-xl space-y-6 flex flex-col">
+                    <div class="border-b border-slate-800 pb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-cyan-400"></i> Calibrador HSV
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">Encuentra los rangos óptimos para el filtro <code class="text-cyan-300 bg-slate-800 px-1 rounded">cv2.inRange</code>.</p>
+                    </div>
+
+                    <!-- LÍMITES INFERIORES -->
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-bold text-slate-300 uppercase bg-slate-900 p-2 rounded text-center border border-slate-800">Límite Inferior (Lower Bound)</h4>
+                        
+                        <div>
+                            <div class="flex justify-between text-[10px] font-mono text-slate-400 mb-1"><span>H_min</span><span id="v-hmin" class="text-white">0</span></div>
+                            <input type="range" id="h-min" min="0" max="179" value="0" class="hue-track w-full h-1.5 rounded-lg appearance-none cursor-pointer" oninput="updateSimulator()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-mono text-slate-400 mb-1"><span>S_min</span><span id="v-smin" class="text-white">100</span></div>
+                            <input type="range" id="s-min" min="0" max="255" value="100" class="sat-track w-full h-1.5 rounded-lg appearance-none cursor-pointer" oninput="updateSimulator()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-mono text-slate-400 mb-1"><span>V_min</span><span id="v-vmin" class="text-white">50</span></div>
+                            <input type="range" id="v-min" min="0" max="255" value="50" class="val-track w-full h-1.5 rounded-lg appearance-none cursor-pointer" oninput="updateSimulator()">
+                        </div>
+                    </div>
+
+                    <!-- LÍMITES SUPERIORES -->
+                    <div class="space-y-4 mt-4">
+                        <h4 class="text-xs font-bold text-slate-300 uppercase bg-slate-900 p-2 rounded text-center border border-slate-800">Límite Superior (Upper Bound)</h4>
+                        
+                        <div>
+                            <div class="flex justify-between text-[10px] font-mono text-slate-400 mb-1"><span>H_max</span><span id="v-hmax" class="text-white">179</span></div>
+                            <input type="range" id="h-max" min="0" max="179" value="179" class="hue-track w-full h-1.5 rounded-lg appearance-none cursor-pointer" oninput="updateSimulator()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-mono text-slate-400 mb-1"><span>S_max</span><span id="v-smax" class="text-white">255</span></div>
+                            <input type="range" id="s-max" min="0" max="255" value="255" class="sat-track w-full h-1.5 rounded-lg appearance-none cursor-pointer" oninput="updateSimulator()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-mono text-slate-400 mb-1"><span>V_max</span><span id="v-vmax" class="text-white">255</span></div>
+                            <input type="range" id="v-max" min="0" max="255" value="255" class="val-track w-full h-1.5 rounded-lg appearance-none cursor-pointer" oninput="updateSimulator()">
+                        </div>
+                    </div>
+
+                    <button onclick="presetColor('red')" class="mt-4 w-full bg-rose-900/40 border border-rose-500/50 hover:bg-rose-800/60 text-rose-400 text-xs py-2 rounded transition">Probar Predeterminado: Rojo</button>
+                    <button onclick="presetColor('blue')" class="mt-2 w-full bg-blue-900/40 border border-blue-500/50 hover:bg-blue-800/60 text-blue-400 text-xs py-2 rounded transition">Probar Predeterminado: Azul</button>
+
+                </div>
+
+                <!-- CANVAS & CODIGO (DERECHA) -->
+                <div class="lg:col-span-8 flex flex-col gap-6">
+                    
+                    <!-- PANEL DE PREVISUALIZACIÓN -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 md:p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center justify-center">
+                            
+                            <div class="flex flex-col items-center bg-slate-900/50 p-2 rounded-lg border border-slate-800">
+                                <span class="text-[10px] font-mono text-slate-400 mb-2 uppercase tracking-widest font-bold">1. Cámara (RGB/BGR)</span>
+                                <canvas id="canvas-cam" width="200" height="200" class="bg-black rounded w-full max-w-[200px] aspect-square object-cover"></canvas>
+                            </div>
+
+                            <div class="flex flex-col items-center bg-slate-900/50 p-2 rounded-lg border-2 border-slate-600">
+                                <span class="text-[10px] font-mono text-slate-400 mb-2 uppercase tracking-widest font-bold">2. cv2.inRange (Máscara)</span>
+                                <canvas id="canvas-mask" width="200" height="200" class="bg-black rounded w-full max-w-[200px] aspect-square object-cover"></canvas>
+                            </div>
+
+                            <div class="flex flex-col items-center bg-slate-900/50 p-2 rounded-lg border-2 border-cyan-500/50">
+                                <span class="text-[10px] font-mono text-cyan-400 mb-2 uppercase tracking-widest font-bold">3. bitwise_and (Salida)</span>
+                                <canvas id="canvas-res" width="200" height="200" class="bg-black rounded w-full max-w-[200px] aspect-square object-cover"></canvas>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- EDITOR PYTHON DINÁMICO -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex-grow flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-brands fa-python text-yellow-400"></i> Código Generado OpenCV
+                            </h3>
+                            <button onclick="copyCode('code-editor')" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                        <textarea id="code-editor" readonly class="w-full text-xs md:text-sm bg-[#0d1117] p-4 rounded-xl border border-slate-700 text-cyan-300 overflow-y-auto code-font min-h-[160px] focus:outline-none resize-none"></textarea>
+                        <p class="text-[10px] text-slate-500 mt-2">Los arrays numpy se han actualizado automáticamente basándose en tu selección gráfica.</p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 3: DESAFÍOS MECTRÓNICOS            -->
+        <!-- ========================================== -->
+        <section id="sec-desafios" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-violet-900/30 via-slate-900 to-slate-900 border border-violet-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-violet-400 font-mono text-xs uppercase tracking-widest font-semibold">Integración Práctica</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Desafíos en Tiempo Real (Webcam)</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm">
+                        El procesamiento estático de imágenes es útil, pero la robótica opera en tiempo real. Para esta práctica final, utilizarás la cámara web de tu computadora para ejecutar un bucle infinito que procesará cuadro por cuadro a 30 FPS.
+                    </p>
+                </div>
+            </div>
+
+            <!-- RETOS -->
+            <div class="grid grid-cols-1 gap-6">
+                <!-- Reto 1 -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 md:p-8">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <span class="text-xs font-mono bg-red-500/10 text-red-300 border border-red-500/20 px-2 py-0.5 rounded mb-3 inline-block">Misión Principal</span>
+                            <h4 class="text-2xl font-bold text-white mb-2">Color Tracking Dinámico por Webcam</h4>
+                            <p class="text-slate-400 text-sm leading-relaxed max-w-3xl">
+                                Tu objetivo es detectar y enmascarar un objeto sólido de color vívido (por ejemplo, una tapa de botella azul o roja, un post-it, etc.) utilizando la cámara de tu laptop.
+                            </p>
+                        </div>
+                        <i class="fa-solid fa-video text-slate-600 text-4xl"></i>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="space-y-4 text-sm text-slate-300 bg-slate-900 p-5 rounded-lg border border-slate-800">
+                            <p class="font-bold text-slate-200 border-b border-slate-700 pb-2">Instrucciones Paso a Paso:</p>
+                            <ol class="list-decimal pl-4 space-y-3">
+                                <li><strong>Calibración:</strong> Toma una foto con tu cámara al objeto que vas a rastrear. Cárgala en la pestaña <em>Simulador</em> y juega con los sliders hasta aislarlo perfectamente en la máscara blanca. Anota los límites.</li>
+                                <li><strong>Código:</strong> Copia el script de la derecha en tu IDE local (VS Code, PyCharm o Spyder).</li>
+                                <li><strong>Configuración:</strong> Reemplaza <code class="text-cyan-400 font-mono">lower_color</code> y <code class="text-cyan-400 font-mono">upper_color</code> en el código con los valores de tu calibración.</li>
+                                <li><strong>Ejecución:</strong> Corre el programa, muestra el objeto a la cámara e intenta moverlo rápidamente para comprobar la robustez del filtrado HSV frente a sombras.</li>
+                            </ol>
+                        </div>
+
+                        <!-- Código Webcam a copiar -->
+                        <div class="relative group">
+                            <button onclick="copyCode('webcam-code')" class="absolute top-3 right-3 bg-slate-800 hover:bg-slate-700 text-xs px-2.5 py-1.5 rounded text-slate-300 border border-slate-700 transition flex items-center gap-1">
+                                <i class="fa-solid fa-copy"></i> Copiar Código
+                            </button>
+                            <pre id="webcam-code" class="h-full text-[11px] md:text-xs bg-[#0d1117] p-5 rounded-lg border border-slate-700 text-slate-300 overflow-x-auto code-font">
+<span class="text-purple-400">import</span> cv2
+<span class="text-purple-400">import</span> numpy <span class="text-purple-400">as</span> np
+
+<span class="text-slate-500"># 1. Iniciar captura de video. 0 indica la cámara por defecto.</span>
+cap = cv2.VideoCapture(<span class="text-amber-400">0</span>)
+
+<span class="text-purple-400">while</span> <span class="text-amber-400">True</span>:
+    <span class="text-slate-500"># Leer un frame (cuadro) de la cámara</span>
+    ret, frame = cap.read()
+    <span class="text-purple-400">if not</span> ret: <span class="text-purple-400">break</span>
+
+    <span class="text-slate-500"># 2. Espejar frame (opcional para UX natural) y convertir a HSV</span>
+    frame = cv2.flip(frame, <span class="text-amber-400">1</span>)
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    <span class="text-slate-500"># 3. REEMPLAZA ESTOS VALORES CON LOS DE TU SIMULADOR</span>
+    lower_color = np.array([<span class="text-amber-400">100</span>, <span class="text-amber-400">150</span>, <span class="text-amber-400">50</span>])
+    upper_color = np.array([<span class="text-amber-400">140</span>, <span class="text-amber-400">255</span>, <span class="text-amber-400">255</span>])
+
+    <span class="text-slate-500"># 4. Construir máscara y aplicar Bitwise</span>
+    mask = cv2.inRange(hsv, lower_color, upper_color)
+    res = cv2.bitwise_and(frame, frame, mask=mask)
+
+    <span class="text-slate-500"># 5. Mostrar las tres ventanas</span>
+    cv2.imshow(<span class="text-emerald-400">'Original'</span>, frame)
+    cv2.imshow(<span class="text-emerald-400">'Mascara Binaria'</span>, mask)
+    cv2.imshow(<span class="text-emerald-400">'Objeto Detectado'</span>, res)
+
+    <span class="text-slate-500"># Salir presionando la tecla 'q' o 'ESC' (27)</span>
+    <span class="text-purple-400">if</span> cv2.waitKey(<span class="text-amber-400">1</span>) & <span class="text-amber-400">0xFF</span> == <span class="text-purple-400">ord</span>(<span class="text-emerald-400">'q'</span>):
+        <span class="text-purple-400">break</span>
+
+<span class="text-slate-500"># Liberar hardware y cerrar ventanas</span>
+cap.release()
+cv2.destroyAllWindows()</pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 bg-slate-950 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p class="text-xs text-slate-400">Universidad Politécnica - Área de Mecatrónica y Visión por Computadora</p>
+            <p class="text-[10px] text-slate-600">Material interactivo para conversión de espacios de color e inRange. OpenCV + JS.</p>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE CONTROL DEL SIMULADOR & RENDERING JS -->
+    <script>
+        lucide.createIcons();
+
+        // Variables Globales Canvas
+        const cvsCam = document.getElementById('canvas-cam');
+        const cvsMask = document.getElementById('canvas-mask');
+        const cvsRes = document.getElementById('canvas-res');
+        const ctxCam = cvsCam.getContext('2d', { willReadFrequently: true });
+        const ctxMask = cvsMask.getContext('2d');
+        const ctxRes = cvsRes.getContext('2d');
+        
+        const IMG_SIZE = 200;
+        let originalRGB = new Uint8ClampedArray(IMG_SIZE * IMG_SIZE * 4);
+
+        function switchTab(tabName) {
+            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition";
+            }
+
+            if (tabName === 'simulador') setTimeout(initSimulator, 50);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            toast.className = toast.className.replace('translate-y-20 opacity-0', 'translate-y-0 opacity-100');
+            setTimeout(() => {
+                toast.className = toast.className.replace('translate-y-0 opacity-100', 'translate-y-20 opacity-0');
+            }, 3000);
+        }
+
+        function copyCode(elementId) {
+            const el = document.getElementById(elementId);
+            const text = el.tagName === 'TEXTAREA' ? el.value : el.innerText;
+            navigator.clipboard.writeText(text).then(() => showToast('¡Código copiado!')).catch(err => {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                showToast('¡Código copiado!');
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // ==========================================
+        // SIMULADOR MATEMÁTICO RGB A HSV
+        // ==========================================
+
+        window.onload = () => {
+            initSimulator();
+        };
+
+        function initSimulator() {
+            generateTestImage();
+            presetColor('blue'); // Empieza con rango azul
+        }
+
+        function presetColor(color) {
+            if (color === 'red') {
+                // En OpenCV el rojo está dividido entre 0-10 y 170-179. Asumiremos 0-10 para simplicidad.
+                document.getElementById('h-min').value = 0;
+                document.getElementById('h-max').value = 15;
+            } else if (color === 'blue') {
+                document.getElementById('h-min').value = 100;
+                document.getElementById('h-max').value = 140;
+            }
+            
+            document.getElementById('s-min').value = 100; document.getElementById('s-max').value = 255;
+            document.getElementById('v-min').value = 50;  document.getElementById('v-max').value = 255;
+            
+            updateSimulator();
+        }
+
+        // Genera imagen con bloques de colores básicos y gradientes para test
+        function generateTestImage() {
+            let imgData = ctxCam.createImageData(IMG_SIZE, IMG_SIZE);
+            for (let y = 0; y < IMG_SIZE; y++) {
+                for (let x = 0; x < IMG_SIZE; x++) {
+                    let r=0, g=0, b=0;
+                    
+                    // Division en 4 cuadrantes
+                    if (y < IMG_SIZE/2 && x < IMG_SIZE/2) {
+                        r = 255; g = x; b = 50; // Rojo/Naranja
+                    } else if (y < IMG_SIZE/2 && x >= IMG_SIZE/2) {
+                        r = 0; g = 255 - (y/2); b = 255; // Azul/Cyan
+                    } else if (y >= IMG_SIZE/2 && x < IMG_SIZE/2) {
+                        r = 50; g = 255; b = x; // Verde
+                    } else {
+                        r = 255; g = 255; b = 255 - x; // Amarillo/Blanco (Desaturado)
+                    }
+
+                    // Sombra / Gradiente de iluminación simulando Value
+                    let shadow = 1 - (y / IMG_SIZE) * 0.5;
+                    
+                    const idx = (y * IMG_SIZE + x) * 4;
+                    originalRGB[idx] = Math.floor(r * shadow);
+                    originalRGB[idx+1] = Math.floor(g * shadow);
+                    originalRGB[idx+2] = Math.floor(b * shadow);
+                    originalRGB[idx+3] = 255;
+                }
+            }
+            imgData.data.set(originalRGB);
+            ctxCam.putImageData(imgData, 0, 0);
+        }
+
+        // Función matemática para convertir un pixel RGB a HSV (Escala de OpenCV)
+        function rgbToHsvOpenCV(r, g, b) {
+            let r_n = r / 255, g_n = g / 255, b_n = b / 255;
+            let v_max = Math.max(r_n, g_n, b_n), v_min = Math.min(r_n, g_n, b_n);
+            let diff = v_max - v_min;
+            
+            let h = 0, s = 0, v = v_max;
+
+            if (v_max !== 0) s = diff / v_max;
+            
+            if (diff !== 0) {
+                if (v_max === r_n) h = 60 * ((g_n - b_n) / diff);
+                else if (v_max === g_n) h = 60 * (2 + (b_n - r_n) / diff);
+                else h = 60 * (4 + (r_n - g_n) / diff);
+                if (h < 0) h += 360;
+            }
+
+            // Mapeo a rangos OpenCV (H: 0-179, S: 0-255, V: 0-255)
+            return {
+                h: Math.round(h / 2),
+                s: Math.round(s * 255),
+                v: Math.round(v * 255)
+            };
+        }
+
+        function updateSimulator() {
+            // Obtener valores UI
+            const hMin = parseInt(document.getElementById('h-min').value);
+            const sMin = parseInt(document.getElementById('s-min').value);
+            const vMin = parseInt(document.getElementById('v-min').value);
+            const hMax = parseInt(document.getElementById('h-max').value);
+            const sMax = parseInt(document.getElementById('s-max').value);
+            const vMax = parseInt(document.getElementById('v-max').value);
+
+            // Actualizar labels
+            document.getElementById('v-hmin').innerText = hMin;
+            document.getElementById('v-smin').innerText = sMin;
+            document.getElementById('v-vmin').innerText = vMin;
+            document.getElementById('v-hmax').innerText = hMax;
+            document.getElementById('v-smax').innerText = sMax;
+            document.getElementById('v-vmax').innerText = vMax;
+
+            // Procesar Píxeles
+            let maskData = ctxMask.createImageData(IMG_SIZE, IMG_SIZE);
+            let resData = ctxRes.createImageData(IMG_SIZE, IMG_SIZE);
+
+            for (let i = 0; i < originalRGB.length; i += 4) {
+                let r = originalRGB[i], g = originalRGB[i+1], b = originalRGB[i+2];
+                let hsv = rgbToHsvOpenCV(r, g, b);
+
+                // Lógica de inRange
+                // Se agrega soporte básico para cuando hMin > hMax (Hue wrapping en rojo)
+                let inRangeH = hMin <= hMax ? (hsv.h >= hMin && hsv.h <= hMax) : (hsv.h >= hMin || hsv.h <= hMax);
+                let inRangeS = hsv.s >= sMin && hsv.s <= sMax;
+                let inRangeV = hsv.v >= vMin && hsv.v <= vMax;
+
+                let isMask = (inRangeH && inRangeS && inRangeV) ? 255 : 0;
+
+                // Set Mask Canvas (Blanco/Negro)
+                maskData.data[i] = maskData.data[i+1] = maskData.data[i+2] = isMask;
+                maskData.data[i+3] = 255;
+
+                // Set Result Canvas (Bitwise AND)
+                resData.data[i] = isMask ? r : 0;
+                resData.data[i+1] = isMask ? g : 0;
+                resData.data[i+2] = isMask ? b : 0;
+                resData.data[i+3] = 255;
+            }
+
+            ctxMask.putImageData(maskData, 0, 0);
+            ctxRes.putImageData(resData, 0, 0);
+
+            // Actualizar Código Python Generado
+            const pyCode = `import cv2
+import numpy as np
+
+img = cv2.imread('camara.jpg')
+hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+# Arrays configurados dinámicamente:
+limite_inferior = np.array([${hMin}, ${sMin}, ${vMin}])
+limite_superior = np.array([${hMax}, ${sMax}, ${vMax}])
+
+mask = cv2.inRange(hsv, limite_inferior, limite_superior)
+resultado = cv2.bitwise_and(img, img, mask=mask)
+
+cv2.imshow('Tracking', resultado)
+cv2.waitKey(0)`;
+
+            document.getElementById('code-editor').value = pyCode;
+        }
+    </script>
+</body>
+</html>
