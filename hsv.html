@@ -15,8 +15,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <!-- MathJax para fórmulas matemáticas LaTeX -->
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
@@ -306,8 +305,23 @@ cv2.waitKey(<span class="text-amber-400">0</span>)</pre>
                         </div>
                     </div>
 
-                    <button onclick="presetColor('red')" class="mt-4 w-full bg-rose-900/40 border border-rose-500/50 hover:bg-rose-800/60 text-rose-400 text-xs py-2 rounded transition">Probar Predeterminado: Rojo</button>
-                    <button onclick="presetColor('blue')" class="mt-2 w-full bg-blue-900/40 border border-blue-500/50 hover:bg-blue-800/60 text-blue-400 text-xs py-2 rounded transition">Probar Predeterminado: Azul</button>
+                    <!-- SELECCIÓN DE IMÁGENES Y PRESETS -->
+                    <div class="space-y-3 mt-6 pt-4 border-t border-slate-800">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Imagen de Entrada</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="presetColor('red')" class="bg-rose-900/40 border border-rose-500/50 hover:bg-rose-800/60 text-rose-400 text-xs py-2 rounded transition">Probar: Rojo</button>
+                            <button onclick="presetColor('blue')" class="bg-blue-900/40 border border-blue-500/50 hover:bg-blue-800/60 text-blue-400 text-xs py-2 rounded transition">Probar: Azul</button>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 block mb-1">O sube tu propia imagen:</span>
+                            <label class="flex flex-col items-center justify-center p-3 border border-dashed border-slate-700 hover:border-cyan-500 rounded cursor-pointer bg-slate-900/50 transition group">
+                                <span class="text-xs text-slate-300 group-hover:text-cyan-400 transition flex items-center gap-2 font-bold">
+                                    <i class="fa-solid fa-upload"></i> Cargar Imagen Local
+                                </span>
+                                <input type="file" id="upload-image" class="hidden" accept="image/*" onchange="handleImageUpload(event)">
+                            </label>
+                        </div>
+                    </div>
 
                 </div>
 
@@ -565,6 +579,33 @@ cv2.destroyAllWindows()</pre>
             }
             imgData.data.set(originalRGB);
             ctxCam.putImageData(imgData, 0, 0);
+        }
+
+        // Manejador para carga de imágenes locales
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // Limpiar el canvas original
+                    ctxCam.clearRect(0, 0, IMG_SIZE, IMG_SIZE);
+                    
+                    // Dibujar y escalar la imagen para que encaje en el lienzo de 200x200
+                    ctxCam.drawImage(img, 0, 0, IMG_SIZE, IMG_SIZE);
+                    
+                    // Extraer los nuevos píxeles y guardarlos en el array global
+                    const imgData = ctxCam.getImageData(0, 0, IMG_SIZE, IMG_SIZE);
+                    originalRGB.set(imgData.data);
+                    
+                    // Volver a aplicar el filtro HSV con la nueva imagen
+                    updateSimulator();
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
         }
 
         // Función matemática para convertir un pixel RGB a HSV (Escala de OpenCV)
