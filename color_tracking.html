@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica Interactiva: Color Tracking - OpenCV & Python</title>
+    
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- MathJax para fórmulas matemáticas LaTeX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #06b6d4;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Navegación Superior -->
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="../index.html" class="text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-2 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Panel Principal
+                </a>
+                <div class="h-4 w-px bg-slate-700"></div>
+                <span class="text-cyan-400 font-bold uppercase tracking-widest text-xs">Visión Artificial</span>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-md">
+                <i data-lucide="book-open" class="w-4 h-4 text-purple-400"></i>
+                <span class="text-xs font-mono text-slate-300">Práctica_05.py</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HEADER / BARRA DE PESTAÑAS -->
+    <header class="border-b border-slate-800 bg-slate-950 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-cyan-600/20 text-cyan-400 rounded-lg border border-cyan-500/30">
+                    <i data-lucide="target" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Guía de Visión Artificial <span class="text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono">OpCV-105</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Práctica de Laboratorio: Seguimiento de Objetos (Color Tracking)</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchTab('teoria')" id="tab-teoria" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition">
+                    <i class="fa-solid fa-book mr-2"></i>Guía & Teoría
+                </button>
+                <button onclick="switchTab('simulador')" id="tab-simulador" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-sliders mr-2"></i>Simulador OpenCV
+                </button>
+                <button onclick="switchTab('desafios')" id="tab-desafios" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-crosshairs mr-2"></i>Desafíos Mecatrónicos
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- NOTIFICACIÓN FLOTANTE (TOAST) -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toast-msg">¡Código copiado al portapapeles!</span>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 1: GUÍA & TEORÍA                   -->
+        <!-- ========================================== -->
+        <section id="sec-teoria" class="space-y-8">
+            <div class="bg-gradient-to-r from-cyan-900/30 via-slate-900 to-slate-900 border border-cyan-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-cyan-400 font-mono text-xs uppercase tracking-widest font-semibold">Análisis de Formas y Posicionamiento</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Color Tracking y Extracción de Coordenadas</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                        Filtrar una imagen por color (como vimos en HSV) nos da una máscara binaria. Pero para que un robot actúe, necesita <strong>coordenadas espaciales ($X, Y$)</strong>. 
+                        El <em>Tracking</em> (seguimiento) extrae matemáticamente los contornos de esa máscara para calcular el centro de masa del objeto y trazar cajas delimitadoras (<em>Bounding Boxes</em>) en tiempo real.
+                    </p>
+                </div>
+            </div>
+
+            <!-- TARJETAS DE TEORÍA -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Tarjeta 1: Contornos -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-violet-400 text-2xl mb-4"><i class="fa-solid fa-draw-polygon"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">1. Detección de Contornos</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Un contorno es una curva que une todos los puntos continuos a lo largo de un límite que tienen el mismo color o intensidad. OpenCV utiliza el algoritmo de Suzuki para extraer la topología de la máscara binaria.
+                        </p>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 mb-4 text-xs code-font text-slate-300 space-y-2">
+                            <p><span class="text-violet-400"># Extraer contornos de la máscara</span><br>contornos, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Momentos Espaciales -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-emerald-400 text-2xl mb-4"><i class="fa-solid fa-location-crosshairs"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">2. Centroides (Momentos)</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Para calcular el centro de gravedad de una forma, usamos los <em>Momentos de la Imagen</em>. El centroide $(C_x, C_y)$ se obtiene dividiendo los momentos espaciales de primer orden por el momento de área.
+                        </p>
+                        <div class="bg-slate-900/50 p-2 rounded-lg border border-slate-800 mb-4 overflow-x-auto text-center text-sm">
+                            $$C_x = \frac{M_{10}}{M_{00}} \quad ; \quad C_y = \frac{M_{01}}{M_{00}}$$
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 3: Bounding Box & Filtrado -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-amber-400 text-2xl mb-4"><i class="fa-regular fa-object-group"></i></div>
+                        <h3 class="text-lg font-bold text-white mb-2">3. Bounding Box & Filtrado</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Aislamos el ruido evaluando el área de cada contorno (ignorar manchas pequeñas). Si supera el umbral, dibujamos un rectángulo que encierre el objeto.
+                        </p>
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 mb-4 text-xs code-font text-slate-300 space-y-2 mt-4">
+                            <p><span class="text-amber-400"># Rectángulo Delimitador</span><br>x, y, w, h = cv2.boundingRect(contorno)<br>cv2.rectangle(img, (x,y), (x+w, y+h), (0,255,0), 2)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CÓDIGO BÁSICO PYTHON -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fa-brands fa-python text-yellow-500 text-xl"></i>
+                    <h3 class="text-lg font-semibold text-white">Estructura Básica del Algoritmo de Tracking</h3>
+                </div>
+                <div class="relative group">
+                    <button onclick="copyCode('init-python-code')" class="absolute top-3 right-3 bg-slate-800 hover:bg-slate-700 text-xs px-2.5 py-1.5 rounded text-slate-300 border border-slate-700 transition flex items-center gap-1">
+                        <i class="fa-solid fa-copy"></i> Copiar
+                    </button>
+                    <pre id="init-python-code" class="text-xs md:text-sm bg-slate-900 p-4 rounded-xl border border-slate-800 text-slate-300 overflow-x-auto code-font">
+<span class="text-slate-500"># 1. Asumiendo que ya tienes una 'mascara' generada por cv2.inRange()...</span>
+contornos, jerarquia = cv2.findContours(mascara, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+<span class="text-purple-400">for</span> c <span class="text-purple-400">in</span> contornos:
+    area = cv2.contourArea(c)
+    
+    <span class="text-slate-500"># 2. Filtro de Ruido: Solo procesar objetos grandes (Área > 500 px)</span>
+    <span class="text-purple-400">if</span> area > <span class="text-amber-400">500</span>:
+        <span class="text-slate-500"># 3. Obtener momentos para calcular el centro exacto</span>
+        M = cv2.moments(c)
+        <span class="text-purple-400">if</span> M[<span class="text-emerald-400">"m00"</span>] != <span class="text-amber-400">0</span>:
+            cx = <span class="text-purple-400">int</span>(M[<span class="text-emerald-400">"m10"</span>] / M[<span class="text-emerald-400">"m00"</span>])
+            cy = <span class="text-purple-400">int</span>(M[<span class="text-emerald-400">"m01"</span>] / M[<span class="text-emerald-400">"m00"</span>])
+            
+            <span class="text-slate-500"># Dibujar el centro (Punto rojo)</span>
+            cv2.circle(frame, (cx, cy), <span class="text-amber-400">5</span>, (<span class="text-amber-400">0</span>, <span class="text-amber-400">0</span>, <span class="text-amber-400">255</span>), -<span class="text-amber-400">1</span>)
+
+        <span class="text-slate-500"># 4. Trazar Bounding Box (Rectángulo verde)</span>
+        x, y, w, h = cv2.boundingRect(c)
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (<span class="text-amber-400">0</span>, <span class="text-amber-400">255</span>, <span class="text-amber-400">0</span>), <span class="text-amber-400">2</span>)
+
+cv2.imshow(<span class="text-emerald-400">'Color Tracking'</span>, frame)</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 2: SIMULADOR INTERACTIVO           -->
+        <!-- ========================================== -->
+        <section id="sec-simulador" class="hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- CONTROLES (IZQUIERDA) -->
+                <div class="lg:col-span-4 bg-slate-950 border border-slate-800 p-6 rounded-xl space-y-6 flex flex-col">
+                    <div class="border-b border-slate-800 pb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-cyan-400"></i> Motor de Tracking
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">Ajusta el área para filtrar el ruido y observar el trazado.</p>
+                    </div>
+
+                    <!-- CONTROLES DE TRACKING -->
+                    <div class="space-y-4">
+                        
+                        <!-- Slider Area Minima -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-slate-400 font-bold uppercase">Área Mínima (<code class="text-purple-400">cv2.contourArea</code>)</span>
+                                <span id="v-area" class="text-cyan-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">100 px</span>
+                            </div>
+                            <input type="range" id="min-area" min="0" max="3000" step="50" value="100" class="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-slate-800 accent-cyan-500" oninput="updateTrackerConfig()">
+                            <p class="text-[10px] text-slate-500">Filtra las partículas (ruido) que tengan un área menor al umbral.</p>
+                        </div>
+
+                        <div class="border-t border-slate-800 pt-4 space-y-3">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Elementos de Depuración Visual</label>
+                            
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" id="chk-bbox" checked class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900" onchange="updateTrackerConfig()">
+                                <span class="text-sm text-slate-300 group-hover:text-white transition">Dibujar Bounding Box (Rectángulo)</span>
+                            </label>
+
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" id="chk-centroid" checked class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900" onchange="updateTrackerConfig()">
+                                <span class="text-sm text-slate-300 group-hover:text-white transition">Calcular y Marcar Centroide $(C_x, C_y)$</span>
+                            </label>
+                            
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" id="chk-noise" checked class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-slate-900" onchange="updateTrackerConfig()">
+                                <span class="text-sm text-slate-300 group-hover:text-white transition">Generar Ruido (Partículas pequeñas)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- CANVAS & CODIGO (DERECHA) -->
+                <div class="lg:col-span-8 flex flex-col gap-6">
+                    
+                    <!-- PANEL DE PREVISUALIZACIÓN -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 md:p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider"><i class="fa-solid fa-video text-emerald-400 mr-2"></i>Simulador de Video (Tiempo Real)</h3>
+                            <span class="text-[10px] bg-red-900/40 border border-red-500/50 text-red-400 px-2 py-0.5 rounded font-mono animate-pulse">● REC / 60 FPS</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center">
+                            
+                            <!-- Cámara (Original) -->
+                            <div class="flex flex-col items-center bg-slate-900/50 p-2 rounded-lg border border-slate-800">
+                                <span class="text-[10px] font-mono text-slate-400 mb-2 uppercase tracking-widest font-bold">1. Input / Binarización</span>
+                                <canvas id="sim-mask" width="300" height="225" class="bg-[#111] rounded w-full border border-slate-700 object-cover"></canvas>
+                            </div>
+
+                            <!-- Tracking -->
+                            <div class="flex flex-col items-center bg-slate-900/50 p-2 rounded-lg border-2 border-cyan-500/50">
+                                <span class="text-[10px] font-mono text-cyan-400 mb-2 uppercase tracking-widest font-bold">2. Tracking (Contornos)</span>
+                                <canvas id="sim-track" width="300" height="225" class="bg-[#111] rounded w-full border border-slate-700 object-cover"></canvas>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- EDITOR PYTHON DINÁMICO -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex-grow flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-brands fa-python text-yellow-400"></i> Lógica Implementada
+                            </h3>
+                            <button onclick="copyCode('code-editor')" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                        <textarea id="code-editor" readonly class="w-full text-xs md:text-sm bg-[#0d1117] p-4 rounded-xl border border-slate-700 text-cyan-300 overflow-y-auto code-font min-h-[120px] focus:outline-none resize-none"></textarea>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 3: DESAFÍOS MECTRÓNICOS            -->
+        <!-- ========================================== -->
+        <section id="sec-desafios" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-violet-900/30 via-slate-900 to-slate-900 border border-violet-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-violet-400 font-mono text-xs uppercase tracking-widest font-semibold">Integración Práctica</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Retos de Visión y Control (Mecatrónica)</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm">
+                        Implementa el seguimiento de objetos combinando el procesamiento de imágenes de OpenCV con la actuación física.
+                    </p>
+                </div>
+            </div>
+
+            <!-- RETOS -->
+            <div class="grid grid-cols-1 gap-6">
+                
+                <!-- Reto 1: Tracking Webcam -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 md:p-8">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <span class="text-xs font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded mb-3 inline-block">Misión 1: Software</span>
+                            <h4 class="text-2xl font-bold text-white mb-2">Tracking por Bounding Box</h4>
+                            <p class="text-slate-400 text-sm leading-relaxed max-w-3xl">
+                                Escribe un script que utilice la webcam, aplique un filtro de color (HSV) para detectar un objeto y dibuje un rectángulo verde que siga dicho objeto en tiempo real por la pantalla.
+                            </p>
+                        </div>
+                        <i class="fa-solid fa-desktop text-slate-600 text-4xl"></i>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm text-slate-300 bg-slate-900 p-5 rounded-lg border border-slate-800">
+                        <p class="font-bold text-slate-200 border-b border-slate-700 pb-2 mb-2">Requerimientos del Reto 1:</p>
+                        <ul class="list-disc pl-4 space-y-1">
+                            <li>El programa debe evitar colapsar (crashing) si no detecta el color. Utiliza un bloque <code class="text-emerald-400 font-mono">if len(contornos) > 0:</code>.</li>
+                            <li>Encuentra el contorno más grande usando <code class="text-emerald-400 font-mono">max(contornos, key=cv2.contourArea)</code>. Así evitarás rastrear el ruido del fondo.</li>
+                            <li>Dibuja el <code class="text-emerald-400 font-mono">cv2.boundingRect()</code> sobre el cuadro original.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Reto 2: Visual Servoing -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 md:p-8">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <span class="text-xs font-mono bg-red-500/10 text-red-300 border border-red-500/20 px-2 py-0.5 rounded mb-3 inline-block">Misión 2: Hardware (Avanzado)</span>
+                            <h4 class="text-2xl font-bold text-white mb-2">Seguimiento por Servomotor (Pan/Tilt)</h4>
+                            <p class="text-slate-400 text-sm leading-relaxed max-w-3xl">
+                                Conecta una webcam sobre un servomotor controlado por un Arduino. Utiliza Python (PySerial) para calcular el "error de posición" del objeto y enviar un comando de control para que la cámara gire e intente mantener el objeto siempre en el centro de la pantalla.
+                            </p>
+                        </div>
+                        <i class="fa-solid fa-robot text-slate-600 text-4xl"></i>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 mt-4">
+                        <div class="space-y-4 text-sm text-slate-300 bg-slate-900 p-5 rounded-lg border border-slate-800">
+                            <p class="font-bold text-slate-200 border-b border-slate-700 pb-2">Teoría de Control Básico (Control Proporcional):</p>
+                            <ol class="list-decimal pl-4 space-y-3">
+                                <li><strong>SetPoint (Referencia):</strong> El centro de tu pantalla (e.g., $X = 320$ si tu cámara es 640x480).</li>
+                                <li><strong>Variable Medida:</strong> La coordenada $C_x$ (Centroide) de tu objeto extraída mediante momentos espaciales.</li>
+                                <li><strong>Cálculo de Error:</strong> $\text{Error} = C_x - \text{SetPoint}$.</li>
+                                <li><strong>Señal de Control:</strong> Envía el error al Arduino para mover el Servo: si el error es positivo, mueve el servo a la derecha; si es negativo, a la izquierda.</li>
+                            </ol>
+                        </div>
+
+                        <!-- Código Arduino/Python Híbrido a copiar -->
+                        <div class="relative group">
+                            <button onclick="copyCode('servo-code')" class="absolute top-3 right-3 bg-slate-800 hover:bg-slate-700 text-xs px-2.5 py-1.5 rounded text-slate-300 border border-slate-700 transition flex items-center gap-1">
+                                <i class="fa-solid fa-copy"></i> Fragmento Python
+                            </button>
+                            <pre id="servo-code" class="h-full text-[11px] md:text-xs bg-[#0d1117] p-5 rounded-lg border border-slate-700 text-slate-300 overflow-x-auto code-font">
+<span class="text-slate-500"># Fragmento para Comunicación Python -> Arduino</span>
+<span class="text-purple-400">import</span> serial
+<span class="text-purple-400">import</span> time
+
+<span class="text-slate-500"># 1. Configurar puerto Serial (ajusta "COM3" o "/dev/ttyUSB0")</span>
+arduino = serial.Serial(<span class="text-emerald-400">'COM3'</span>, <span class="text-amber-400">9600</span>, timeout=<span class="text-amber-400">1</span>)
+time.sleep(<span class="text-amber-400">2</span>) <span class="text-slate-500"># Esperar a que Arduino reinicie</span>
+
+<span class="text-slate-500"># Dentro de tu bucle while de OpenCV...</span>
+<span class="text-purple-400">if</span> area > <span class="text-amber-400">500</span>:
+    <span class="text-slate-500"># Obtener Cx</span>
+    cx = <span class="text-purple-400">int</span>(M[<span class="text-emerald-400">"m10"</span>] / M[<span class="text-emerald-400">"m00"</span>])
+    
+    <span class="text-slate-500"># Calcular error respecto al centro (Asumiendo ancho de 640)</span>
+    centro_pantalla = <span class="text-amber-400">320</span>
+    error = cx - centro_pantalla
+    
+    <span class="text-slate-500"># Enviar al Arduino como string seguido de salto de línea</span>
+    comando = <span class="text-emerald-400">f"{error}\n"</span>
+    arduino.write(comando.encode())
+    
+    <span class="text-slate-500"># Opcional: Imprimir para depurar</span>
+    <span class="text-purple-400">print</span>(<span class="text-emerald-400">f"Error enviado: {error}"</span>)
+
+<span class="text-slate-500"># No olvides cerrar el puerto al finalizar:</span>
+<span class="text-slate-500"># arduino.close()</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 bg-slate-950 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p class="text-xs text-slate-400">Universidad Politécnica - Área de Mecatrónica y Visión por Computadora</p>
+            <p class="text-[10px] text-slate-600">Integración de Control y Software OpenCV. Motor de Animación JS.</p>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DEL SIMULADOR & ANIMACIÓN JS -->
+    <script>
+        lucide.createIcons();
+
+        // Variables Globales
+        let minArea = 100;
+        let showBbox = true;
+        let showCentroid = true;
+        let enableNoise = true;
+        
+        let simActive = false;
+        let animationId;
+
+        // Contextos de Canvas
+        const cvsMask = document.getElementById('sim-mask');
+        const cvsTrack = document.getElementById('sim-track');
+        const ctxM = cvsMask.getContext('2d');
+        const ctxT = cvsTrack.getContext('2d');
+        
+        const W = cvsMask.width; // 300
+        const H = cvsMask.height; // 225
+
+        // Objetos simulados
+        let mainObj = { x: 150, y: 112, vx: 2, vy: 1.5, r: 25 }; // Area aprox: 1963
+        let noiseObjs = [];
+
+        function initNoise() {
+            noiseObjs = [];
+            for(let i=0; i<8; i++) {
+                noiseObjs.push({
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    vx: (Math.random() - 0.5) * 1,
+                    vy: (Math.random() - 0.5) * 1,
+                    r: Math.random() * 4 + 2 // Areas pequeñas (12 a 50)
+                });
+            }
+        }
+
+        // Navegación
+        function switchTab(tabName) {
+            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition";
+            }
+
+            // Gestionar Game Loop (Solo correr cuando estamos en el simulador para ahorrar CPU)
+            if (tabName === 'simulador') {
+                if (!simActive) {
+                    simActive = true;
+                    initNoise();
+                    updateTrackerConfig();
+                    animationLoop();
+                }
+            } else {
+                simActive = false;
+                cancelAnimationFrame(animationId);
+            }
+        }
+
+        // UI Utils
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            toast.className = toast.className.replace('translate-y-20 opacity-0', 'translate-y-0 opacity-100');
+            setTimeout(() => {
+                toast.className = toast.className.replace('translate-y-0 opacity-100', 'translate-y-20 opacity-0');
+            }, 3000);
+        }
+
+        function copyCode(elementId) {
+            const el = document.getElementById(elementId);
+            const text = el.tagName === 'TEXTAREA' ? el.value : el.innerText;
+            navigator.clipboard.writeText(text).then(() => showToast('¡Código copiado!')).catch(err => {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                showToast('¡Código copiado!');
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // ==========================================
+        // MOTOR DE ANIMACIÓN DEL SIMULADOR
+        // ==========================================
+
+        function updateTrackerConfig() {
+            minArea = parseInt(document.getElementById('min-area').value);
+            showBbox = document.getElementById('chk-bbox').checked;
+            showCentroid = document.getElementById('chk-centroid').checked;
+            enableNoise = document.getElementById('chk-noise').checked;
+            
+            document.getElementById('v-area').innerText = minArea + " px";
+
+            // Actualizar código en pantalla
+            let code = `contornos, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\n\n`;
+            code += `for c in contornos:\n`;
+            code += `    area = cv2.contourArea(c)\n`;
+            code += `    if area > ${minArea}:\n`;
+            
+            if (showCentroid) {
+                code += `        M = cv2.moments(c)\n`;
+                code += `        if M["m00"] != 0:\n`;
+                code += `            cx = int(M["m10"] / M["m00"])\n`;
+                code += `            cy = int(M["m01"] / M["m00"])\n`;
+                code += `            cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)\n`;
+            }
+            if (showBbox) {
+                code += `        x, y, w, h = cv2.boundingRect(c)\n`;
+                code += `        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)\n`;
+            }
+            
+            document.getElementById('code-editor').value = code;
+        }
+
+        function updatePhysics(obj) {
+            obj.x += obj.vx;
+            obj.y += obj.vy;
+            // Rebote en bordes
+            if(obj.x - obj.r < 0 || obj.x + obj.r > W) obj.vx *= -1;
+            if(obj.y - obj.r < 0 || obj.y + obj.r > H) obj.vy *= -1;
+        }
+
+        function drawObject(ctx, obj, color) {
+            ctx.beginPath();
+            ctx.arc(obj.x, obj.y, obj.r, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        function drawTracking(ctx, obj) {
+            let area = Math.PI * obj.r * obj.r; // Área del círculo
+            if (area > minArea) {
+                if (showBbox) {
+                    ctx.strokeStyle = '#22c55e'; // Green
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(obj.x - obj.r, obj.y - obj.r, obj.r*2, obj.r*2);
+                }
+                if (showCentroid) {
+                    ctx.beginPath();
+                    ctx.arc(obj.x, obj.y, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ef4444'; // Red center
+                    ctx.fill();
+                    
+                    // Crosshair
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(obj.x, 0); ctx.lineTo(obj.x, H);
+                    ctx.moveTo(0, obj.y); ctx.lineTo(W, obj.y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function animationLoop() {
+            if (!simActive) return;
+
+            // Físicas
+            updatePhysics(mainObj);
+            if (enableNoise) {
+                noiseObjs.forEach(n => updatePhysics(n));
+            }
+
+            // Render Máscara Binaria (B/N)
+            ctxM.clearRect(0, 0, W, H);
+            drawObject(ctxM, mainObj, '#ffffff');
+            if (enableNoise) {
+                noiseObjs.forEach(n => drawObject(ctxM, n, '#ffffff'));
+            }
+
+            // Render Tracking Visual
+            ctxT.clearRect(0, 0, W, H);
+            
+            // Dibujamos los objetos (Simulando la imagen RGB original capturada)
+            drawObject(ctxT, mainObj, '#3b82f6'); // Blue object
+            if (enableNoise) {
+                noiseObjs.forEach(n => drawObject(ctxT, n, '#3b82f6'));
+            }
+
+            // Simulación del proceso OpenCV sobre los objetos renderizados
+            drawTracking(ctxT, mainObj);
+            if (enableNoise) {
+                noiseObjs.forEach(n => drawTracking(ctxT, n));
+            }
+
+            // Loop
+            animationId = requestAnimationFrame(animationLoop);
+        }
+
+    </script>
+</body>
+</html>
