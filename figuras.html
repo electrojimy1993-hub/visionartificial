@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica Interactiva: Reconocimiento de Figuras - OpenCV & Python</title>
+    
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #06b6d4;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
+
+        /* Diagram Animations */
+        .flow-arrow {
+            animation: pulse-arrow 2s infinite;
+        }
+        @keyframes pulse-arrow {
+            0% { opacity: 0.3; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(3px); }
+            100% { opacity: 0.3; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Navegación Superior -->
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="../index.html" class="text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-2 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Panel Principal
+                </a>
+                <div class="h-4 w-px bg-slate-700"></div>
+                <span class="text-cyan-400 font-bold uppercase tracking-widest text-xs">Visión Artificial</span>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-md">
+                <i data-lucide="book-open" class="w-4 h-4 text-purple-400"></i>
+                <span class="text-xs font-mono text-slate-300">Práctica_06.py</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HEADER / BARRA DE PESTAÑAS -->
+    <header class="border-b border-slate-800 bg-slate-950 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-cyan-600/20 text-cyan-400 rounded-lg border border-cyan-500/30">
+                    <i data-lucide="shapes" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Guía de Visión Artificial <span class="text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono">OpCV-106</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Práctica de Laboratorio: Reconocimiento de Figuras Geométricas</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchTab('teoria')" id="tab-teoria" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition">
+                    <i class="fa-solid fa-book mr-2"></i>Diseño del Algoritmo
+                </button>
+                <button onclick="switchTab('simulador')" id="tab-simulador" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-microchip mr-2"></i>Simulador & Sintaxis
+                </button>
+                <button onclick="switchTab('desafios')" id="tab-desafios" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-industry mr-2"></i>Caso Industrial
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 1: GUÍA & TEORÍA                   -->
+        <!-- ========================================== -->
+        <section id="sec-teoria" class="space-y-8">
+            <div class="bg-gradient-to-r from-cyan-900/30 via-slate-900 to-slate-900 border border-cyan-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-cyan-400 font-mono text-xs uppercase tracking-widest font-semibold">Análisis Geométrico y Topológico</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Reconocimiento de Formas</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                        Detectar y clasificar figuras geométricas es la base de la visión artificial para el control de calidad y la robótica pick-and-place. Este proceso no es magia, requiere un <strong>flujo de trabajo (pipeline)</strong> riguroso que transforma una imagen de píxeles ruidosos en vértices matemáticos contabilizables. En esta práctica, <strong>tú serás el encargado de investigar e integrar el código</strong> basándote en los fundamentos teóricos descritos a continuación.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ETAPAS DE PROCESAMIENTO -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-white border-b border-slate-800 pb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-cyan-400"></i> Etapas Fundamentales de Procesamiento
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="bg-slate-800 text-slate-300 w-6 h-6 rounded flex items-center justify-center font-bold text-sm">1</span>
+                            <h4 class="font-bold text-white">Acondicionamiento (Preprocesamiento)</h4>
+                        </div>
+                        <p class="text-sm text-slate-400 leading-relaxed">
+                            Las imágenes a color contienen demasiada información irrelevante para encontrar la <em>forma</em>. Primero, se convierte la imagen a <strong>escala de grises</strong>. Luego, es imperativo aplicar un <strong>filtro de suavizado (como el Filtro Gaussiano)</strong> para eliminar el ruido de alta frecuencia que podría generar contornos falsos en las siguientes etapas.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="bg-slate-800 text-slate-300 w-6 h-6 rounded flex items-center justify-center font-bold text-sm">2</span>
+                            <h4 class="font-bold text-white">Segmentación y Bordes</h4>
+                        </div>
+                        <p class="text-sm text-slate-400 leading-relaxed">
+                            Debemos separar el objeto de interés del fondo. Dependiendo de la iluminación, esto se logra mediante una <strong>Binarización (Umbralización)</strong> o utilizando un detector de bordes como el algoritmo <strong>Canny</strong>. El objetivo de esta etapa es obtener una imagen puramente binaria (blanco y negro).
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="bg-slate-800 text-slate-300 w-6 h-6 rounded flex items-center justify-center font-bold text-sm">3</span>
+                            <h4 class="font-bold text-white">Extracción de Contornos</h4>
+                        </div>
+                        <p class="text-sm text-slate-400 leading-relaxed">
+                            Una vez obtenida la máscara binaria, un algoritmo topológico analiza la imagen interconectando los píxeles blancos contiguos para formar un bucle cerrado. Esto genera una lista de coordenadas $(x, y)$ que delinean el perímetro de la figura.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="bg-slate-800 text-slate-300 w-6 h-6 rounded flex items-center justify-center font-bold text-sm">4</span>
+                            <h4 class="font-bold text-white">Aproximación Poligonal</h4>
+                        </div>
+                        <p class="text-sm text-slate-400 leading-relaxed">
+                            El contorno crudo suele tener cientos de puntos debido a imperfecciones. Para clasificar la forma, usamos el algoritmo de <strong>Douglas-Peucker</strong>, el cual reduce drásticamente el número de vértices de la curva, manteniendo su forma general con base en un factor de precisión (Epsilon $\epsilon$). 
+                            Si el polígono resultante tiene 3 vértices es un triángulo; si tiene 4, un cuadrilátero; si tiene muchos, asumimos un círculo.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROBLEMAS COMUNES Y SOLUCIONES -->
+            <div class="space-y-4 pt-6">
+                <h3 class="text-xl font-bold text-white border-b border-slate-800 pb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Problemáticas Comunes y Soluciones
+                </h3>
+                
+                <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="bg-slate-900 text-slate-400 font-mono text-xs uppercase">
+                            <tr>
+                                <th class="px-6 py-4">Síntoma / Problema</th>
+                                <th class="px-6 py-4">Causa Raíz</th>
+                                <th class="px-6 py-4">Solución en Algoritmo</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/50">
+                            <tr class="hover:bg-slate-900/50 transition">
+                                <td class="px-6 py-4 font-medium text-amber-200">Se detectan cientos de figuras muy pequeñas inexistentes.</td>
+                                <td class="px-6 py-4">Ruido de "sal y pimienta" en el sensor o textura en el fondo.</td>
+                                <td class="px-6 py-4">
+                                    <ul class="list-disc pl-4 space-y-1">
+                                        <li>Aumentar el tamaño del kernel del <strong>filtro Gaussiano</strong>.</li>
+                                        <li>Implementar un condicional que filtre contornos descartando aquellos con <strong>Área < Umbral</strong>.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-900/50 transition">
+                                <td class="px-6 py-4 font-medium text-amber-200">Un rectángulo se clasifica erróneamente como polígono de 6 u 8 lados.</td>
+                                <td class="px-6 py-4">Las esquinas reales del objeto están redondeadas o la aproximación poligonal es muy estricta.</td>
+                                <td class="px-6 py-4">
+                                    <ul class="list-disc pl-4 space-y-1">
+                                        <li>Aumentar el valor del parámetro <strong>Epsilon ($\epsilon$)</strong> (típicamente entre 1% y 5% del perímetro del contorno).</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-900/50 transition">
+                                <td class="px-6 py-4 font-medium text-amber-200">La figura no se detecta completa, su contorno aparece roto o abierto.</td>
+                                <td class="px-6 py-4">Iluminación heterogénea o umbrales incorrectos en la etapa de segmentación.</td>
+                                <td class="px-6 py-4">
+                                    <ul class="list-disc pl-4 space-y-1">
+                                        <li>Usar umbralización adaptativa en lugar de simple.</li>
+                                        <li>Aplicar <strong>operaciones morfológicas de CIERRE (Dilatación seguida de Erosión)</strong> antes de buscar contornos.</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DIAGRAMA A BLOQUES -->
+            <div class="space-y-4 pt-6">
+                <h3 class="text-xl font-bold text-white border-b border-slate-800 pb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-sitemap text-violet-400"></i> Diagrama a Bloques del Algoritmo
+                </h3>
+                
+                <div class="bg-slate-950 border border-slate-800 p-8 rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
+                    
+                    <!-- Diagram Container -->
+                    <div class="flex flex-col items-center space-y-2">
+                        
+                        <!-- Bloque 1 -->
+                        <div class="w-64 bg-cyan-900/30 border border-cyan-500/50 text-cyan-100 py-3 px-4 rounded-lg text-center shadow-lg font-mono text-sm relative z-10">
+                            <strong>1. Captura de Imagen</strong><br>
+                            <span class="text-xs text-cyan-400/80">Cámara / Archivo (RGB)</span>
+                        </div>
+                        
+                        <!-- Flecha -->
+                        <div class="h-8 flex items-center justify-center flow-arrow text-slate-500">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+
+                        <!-- Bloque 2 -->
+                        <div class="w-64 bg-slate-800 border border-slate-600 text-slate-200 py-3 px-4 rounded-lg text-center shadow-lg font-mono text-sm relative z-10">
+                            <strong>2. Escala de Grises</strong><br>
+                            <span class="text-xs text-slate-400">Eliminación de croma</span>
+                        </div>
+
+                        <!-- Flecha -->
+                        <div class="h-8 flex items-center justify-center flow-arrow text-slate-500">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+
+                        <!-- Bloque 3 -->
+                        <div class="w-64 bg-slate-800 border border-slate-600 text-slate-200 py-3 px-4 rounded-lg text-center shadow-lg font-mono text-sm relative z-10">
+                            <strong>3. Filtrado Espacial</strong><br>
+                            <span class="text-xs text-slate-400">Filtro Gaussiano (Anti-ruido)</span>
+                        </div>
+
+                        <!-- Flecha -->
+                        <div class="h-8 flex items-center justify-center flow-arrow text-slate-500">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+
+                        <!-- Bloque 4 -->
+                        <div class="w-64 bg-slate-800 border border-slate-600 text-slate-200 py-3 px-4 rounded-lg text-center shadow-lg font-mono text-sm relative z-10">
+                            <strong>4. Detección de Bordes</strong><br>
+                            <span class="text-xs text-slate-400">Canny / Threshold Binario</span>
+                        </div>
+
+                        <!-- Flecha -->
+                        <div class="h-8 flex items-center justify-center flow-arrow text-slate-500">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+
+                        <!-- Bloque 5 -->
+                        <div class="w-64 bg-violet-900/30 border border-violet-500/50 text-violet-100 py-3 px-4 rounded-lg text-center shadow-lg font-mono text-sm relative z-10">
+                            <strong>5. Extracción de Contornos</strong><br>
+                            <span class="text-xs text-violet-400/80">Listas de Coordenadas XY</span>
+                        </div>
+
+                        <!-- Flecha -->
+                        <div class="h-8 flex items-center justify-center flow-arrow text-slate-500">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+
+                        <!-- Bloque 6 (Condicional/Bifurcación) -->
+                        <div class="flex flex-col items-center">
+                            <div class="w-64 bg-amber-900/30 border border-amber-500/50 text-amber-100 py-3 px-4 rounded-lg text-center shadow-lg font-mono text-sm relative z-10 mb-2">
+                                <strong>6. Aproximación Poligonal</strong><br>
+                                <span class="text-xs text-amber-400/80">Conteo de Vértices (v)</span>
+                            </div>
+                            
+                            <div class="flex space-x-12 mt-4 relative">
+                                <!-- Líneas conectoras horizontales simuladas -->
+                                <div class="absolute top-0 left-12 right-12 h-px bg-slate-600 -z-0"></div>
+                                <div class="absolute top-0 left-12 h-4 w-px bg-slate-600 -z-0"></div>
+                                <div class="absolute top-0 left-1/2 h-4 w-px bg-slate-600 -z-0"></div>
+                                <div class="absolute top-0 right-12 h-4 w-px bg-slate-600 -z-0"></div>
+                                
+                                <div class="pt-4 flex flex-col items-center">
+                                    <span class="text-xs text-amber-300 font-mono mb-1">v == 3</span>
+                                    <div class="w-20 bg-emerald-900/30 border border-emerald-500/50 text-emerald-300 py-2 rounded text-center text-xs font-bold">Triángulo</div>
+                                </div>
+                                <div class="pt-4 flex flex-col items-center">
+                                    <span class="text-xs text-amber-300 font-mono mb-1">v == 4</span>
+                                    <div class="w-20 bg-emerald-900/30 border border-emerald-500/50 text-emerald-300 py-2 rounded text-center text-xs font-bold">Cuadrado</div>
+                                </div>
+                                <div class="pt-4 flex flex-col items-center">
+                                    <span class="text-xs text-amber-300 font-mono mb-1">v > 8</span>
+                                    <div class="w-20 bg-emerald-900/30 border border-emerald-500/50 text-emerald-300 py-2 rounded text-center text-xs font-bold">Círculo</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 2: SIMULADOR INTERACTIVO           -->
+        <!-- ========================================== -->
+        <section id="sec-simulador" class="hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- CONTROLES (IZQUIERDA) -->
+                <div class="lg:col-span-4 bg-slate-950 border border-slate-800 p-6 rounded-xl space-y-6 flex flex-col">
+                    <div class="border-b border-slate-800 pb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-cyan-400"></i> Calibración
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">Simula el ajuste de parámetros clave antes de programar.</p>
+                    </div>
+
+                    <!-- CONTROLES DE PROCESAMIENTO -->
+                    <div class="space-y-6">
+                        
+                        <!-- Slider Ruido Ambiental -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-slate-400 font-bold uppercase">Ruido (Imperfecciones)</span>
+                                <span id="v-noise" class="text-amber-400">Bajo</span>
+                            </div>
+                            <input type="range" id="sim-noise" min="0" max="2" step="1" value="0" class="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-slate-800 accent-amber-500" oninput="runSim()">
+                            <p class="text-[10px] text-slate-500">Prueba cómo el algoritmo de aproximación sufre si el contorno no es perfecto.</p>
+                        </div>
+
+                        <!-- Slider Epsilon -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs font-mono">
+                                <span class="text-slate-400 font-bold uppercase">Factor Epsilon $\epsilon$</span>
+                                <span id="v-epsilon" class="text-cyan-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">Equilibrado</span>
+                            </div>
+                            <input type="range" id="sim-epsilon" min="1" max="100" step="1" value="50" class="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-slate-800 accent-cyan-500" oninput="runSim()">
+                            <div class="flex justify-between text-[9px] text-slate-500 mt-1">
+                                <span>Estricto (Muchos vértices)</span>
+                                <span>Relajado (Pocos vértices)</span>
+                            </div>
+                        </div>
+
+                        <!-- Checklist Diagnóstico -->
+                        <div class="bg-slate-900 border border-slate-700 p-3 rounded-lg space-y-2 mt-4">
+                            <span class="text-xs font-bold text-slate-300 uppercase block border-b border-slate-700 pb-1 mb-2">Diagnóstico Visual</span>
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" id="chk-edges" checked class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-cyan-500" onchange="runSim()">
+                                <span class="text-xs text-slate-300 group-hover:text-white transition">Mostrar máscara de bordes</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" id="chk-vertices" checked class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-cyan-500" onchange="runSim()">
+                                <span class="text-xs text-slate-300 group-hover:text-white transition">Dibujar vértices procesados</span>
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- CANVAS & GLOSARIO (DERECHA) -->
+                <div class="lg:col-span-8 flex flex-col gap-6">
+                    
+                    <!-- PANEL DE PREVISUALIZACIÓN -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 md:p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider"><i class="fa-solid fa-eye text-emerald-400 mr-2"></i>Resultados de Detección</h3>
+                            <span id="shape-count" class="text-xs bg-slate-800 border border-slate-700 text-slate-300 px-3 py-1 rounded-full font-mono">0 figuras válidas</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center justify-center">
+                            
+                            <!-- Cámara (Original) -->
+                            <div class="flex flex-col items-center bg-slate-900/50 p-2 rounded-lg border border-slate-800 relative">
+                                <span class="text-[10px] font-mono text-slate-400 mb-2 uppercase tracking-widest font-bold">Input + Ruido Simulado</span>
+                                <canvas id="canvas-in" width="300" height="225" class="bg-[#1e293b] rounded w-full border border-slate-700 object-cover"></canvas>
+                                <!-- Superposicion de bordes si esta activo -->
+                                <canvas id="canvas-edges" width="300" height="225" class="absolute bottom-2 left-2 right-2 rounded object-cover pointer-events-none opacity-0 transition-opacity duration-300" style="width: calc(100% - 16px);"></canvas>
+                            </div>
+
+                            <!-- Tracking -->
+                            <div class="flex flex-col items-center bg-slate-900/50 p-2 rounded-lg border-2 border-cyan-500/50 relative">
+                                <span class="text-[10px] font-mono text-cyan-400 mb-2 uppercase tracking-widest font-bold">Clasificación aproxPolyDP</span>
+                                <canvas id="canvas-out" width="300" height="225" class="bg-[#0f172a] rounded w-full border border-slate-700 object-cover"></canvas>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- GLOSARIO DE SINTAXIS (SIN CÓDIGO SOLUCIÓN) -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex-grow">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-terminal text-yellow-400"></i> Glosario de Sintaxis OpenCV
+                            </h3>
+                            <span class="text-[10px] text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded uppercase tracking-wider font-bold">Modo Investigador</span>
+                        </div>
+                        
+                        <p class="text-sm text-slate-400 mb-4 leading-relaxed">
+                            A continuación se presentan las piezas del rompecabezas. Deberás integrarlas correctamente en tu script Python para formar el pipeline funcional:
+                        </p>
+
+                        <div class="space-y-3">
+                            <div class="bg-[#0d1117] p-3 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Paso 1: Filtro Suavizado (Gaussiano)</p>
+                                <code class="text-xs font-mono text-emerald-300 block">cv2.GaussianBlur(src_grises, (kernel_size, kernel_size), 0)</code>
+                            </div>
+                            <div class="bg-[#0d1117] p-3 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Paso 2: Binarización (Canny)</p>
+                                <code class="text-xs font-mono text-emerald-300 block">bordes = cv2.Canny(src_suavizada, umbral_minimo, umbral_maximo)</code>
+                            </div>
+                            <div class="bg-[#0d1117] p-3 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Paso 3: Búsqueda de Contornos</p>
+                                <code class="text-xs font-mono text-emerald-300 block">contornos, _ = cv2.findContours(bordes, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)</code>
+                            </div>
+                            <div class="bg-[#0d1117] p-3 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Paso 4: Geometría Perimetral (Dentro del bucle 'for c in contornos:')</p>
+                                <code class="text-xs font-mono text-emerald-300 block mb-1">perimetro = cv2.arcLength(c, True) <span class="text-slate-500"># True = Contorno cerrado</span></code>
+                                <code class="text-xs font-mono text-amber-300 block">epsilon = 0.04 * perimetro <span class="text-slate-500"># Ajusta este multiplicador (1% a 5%)</span></code>
+                                <code class="text-xs font-mono text-emerald-300 block">vertices = cv2.approxPolyDP(c, epsilon, True)</code>
+                                <code class="text-xs font-mono text-cyan-300 block mt-1">cantidad_lados = len(vertices)</code>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 3: DESAFÍOS INDUSTRIALES           -->
+        <!-- ========================================== -->
+        <section id="sec-desafios" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-violet-900/30 via-slate-900 to-slate-900 border border-violet-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-violet-400 font-mono text-xs uppercase tracking-widest font-semibold">Integración Práctica: Caso de Uso</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Control de Calidad: Clasificación de Piezas en Banda Transportadora</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm">
+                        Resuelve el siguiente escenario del mundo real desarrollando un script en Python (desde cero o basándote en la teoría) que cumpla con los requerimientos de la planta industrial.
+                    </p>
+                </div>
+            </div>
+
+            <!-- RETO -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 md:p-8 relative overflow-hidden">
+                <!-- Decorative background elements -->
+                <div class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none text-9xl">
+                    <i class="fa-solid fa-gears"></i>
+                </div>
+
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-rose-500/20 text-rose-400 p-2 rounded-lg">
+                            <i class="fa-solid fa-industry"></i>
+                        </div>
+                        <h4 class="text-2xl font-bold text-white">Planteamiento del Problema</h4>
+                    </div>
+                    
+                    <p class="text-slate-400 text-sm leading-relaxed max-w-4xl mb-6">
+                        En una planta de manufactura metalmecánica, diferentes tipos de piezas de fijación avanzan de forma aleatoria sobre una banda transportadora de color gris oscuro. Al final de la línea, un brazo robótico equipado con ventosas neumáticas debe separar las piezas en tres contenedores distintos. El robot confía ciegamente en el sistema de visión artificial superior para conocer el tipo de pieza y su centro de masa.
+                    </p>
+
+                    <div class="grid md:grid-cols-2 gap-6 mt-4">
+                        <div class="space-y-4 text-sm text-slate-300 bg-slate-900 p-5 rounded-lg border border-slate-800 shadow-inner">
+                            <p class="font-bold text-slate-200 border-b border-slate-700 pb-2 text-rose-200"><i class="fa-solid fa-list-check mr-2"></i> Catálogo de Piezas a Identificar:</p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start gap-3">
+                                    <div class="w-8 h-8 rounded bg-slate-800 border-2 border-slate-600 flex-shrink-0"></div>
+                                    <div>
+                                        <strong class="text-white">Tuercas Cuadradas (4 lados)</strong>
+                                        <p class="text-xs text-slate-500 mt-0.5">Destino: Contenedor A</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <div class="w-8 h-8 clip-hexagon bg-slate-800 border-2 border-slate-600 flex-shrink-0" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);"></div>
+                                    <div>
+                                        <strong class="text-white">Pernos Hexagonales (6 lados)</strong>
+                                        <p class="text-xs text-slate-500 mt-0.5">Destino: Contenedor B</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-slate-800 border-2 border-slate-600 flex-shrink-0"></div>
+                                    <div>
+                                        <strong class="text-white">Rondanas / Arandelas (Círculos)</strong>
+                                        <p class="text-xs text-slate-500 mt-0.5">Destino: Contenedor C</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="space-y-4 text-sm text-slate-300 bg-slate-900 p-5 rounded-lg border border-slate-800">
+                            <p class="font-bold text-slate-200 border-b border-slate-700 pb-2 text-cyan-200"><i class="fa-solid fa-laptop-code mr-2"></i> Requerimientos del Script (Entregable):</p>
+                            <ol class="list-decimal pl-5 space-y-3 text-slate-400 marker:text-cyan-500">
+                                <li>El programa debe encender la webcam o procesar un video de prueba de una cinta transportadora.</li>
+                                <li>Debe ignorar piezas extremadamente pequeñas (rebabas metálicas) filtrando por un <strong class="text-slate-200 font-mono text-xs">cv2.contourArea()</strong> adecuado.</li>
+                                <li>Debe trazar un borde alrededor de cada pieza detectada.</li>
+                                <li>Debe poner un texto sobre cada pieza usando <strong class="text-slate-200 font-mono text-xs">cv2.putText()</strong> que indique: "CUADRADO", "HEXAGONO" o "CIRCULO" dependiendo del conteo de vértices extraídos por <strong class="text-slate-200 font-mono text-xs">approxPolyDP</strong>.</li>
+                                <li>(Bonus Opcional): Calcular e imprimir las coordenadas $(C_x, C_y)$ del centroide de cada pieza validada.</li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 bg-amber-900/20 border border-amber-500/30 p-4 rounded-lg flex items-start gap-3 text-amber-200/80 text-sm">
+                        <i class="fa-solid fa-lightbulb mt-1 text-amber-400"></i>
+                        <p><strong>Nota del Ingeniero en Jefe:</strong> La banda transportadora a veces tiene manchas de aceite. Asegúrate de aplicar un buen Filtro Gaussiano antes de usar Canny, o tus hexágonos terminarán teniendo 20 vértices por culpa de las manchas.</p>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 bg-slate-950 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p class="text-xs text-slate-400">Universidad Politécnica - Área de Mecatrónica y Visión por Computadora</p>
+            <p class="text-[10px] text-slate-600">Material diseñado sin código fuente para fomento de la resolución de problemas analíticos.</p>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE CONTROL DEL SIMULADOR & RENDERING -->
+    <script>
+        // Inicialización de Lucide Icons
+        lucide.createIcons();
+
+        // Variables de estado del Simulador
+        let simNoiseLevel = 0; // 0, 1, 2
+        let simEpsilonVal = 50; // 1 to 100 slider, mapped internally
+        let showEdges = true;
+        let showVertices = true;
+
+        // Contextos
+        const cvsIn = document.getElementById('canvas-in');
+        const cvsEdges = document.getElementById('canvas-edges');
+        const cvsOut = document.getElementById('canvas-out');
+        const ctxIn = cvsIn.getContext('2d');
+        const ctxEd = cvsEdges.getContext('2d');
+        const ctxOut = cvsOut.getContext('2d');
+        
+        const W = cvsIn.width;
+        const H = cvsIn.height;
+
+        // "Verdad absoluta" de las formas generadas (Para el simulador JS)
+        const baseShapes = [
+            // Triangle
+            { type: 'triangle', cx: 60, cy: 70, size: 30, rot: 0.2, color: '#3b82f6', targetVerts: 3 },
+            // Square
+            { type: 'square', cx: 220, cy: 60, size: 40, rot: -0.15, color: '#ef4444', targetVerts: 4 },
+            // Pentagon (might be confused if epsilon is high)
+            { type: 'pentagon', cx: 140, cy: 150, size: 35, rot: 0, color: '#eab308', targetVerts: 5 },
+            // Circle
+            { type: 'circle', cx: 240, cy: 160, size: 25, rot: 0, color: '#10b981', targetVerts: 99 }
+        ];
+
+        // Función para cambiar pestañas
+        function switchTab(tabName) {
+            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition shadow-lg shadow-cyan-900/20";
+            }
+
+            if (tabName === 'simulador') {
+                runSim();
+            }
+        }
+
+        // ==========================================
+        // MOTOR DEL SIMULADOR JS (Aproximación visual)
+        // ==========================================
+        
+        function generatePolygonPoints(cx, cy, radius, sides, rot) {
+            let pts = [];
+            for (let i = 0; i < sides; i++) {
+                let angle = rot + (i * 2 * Math.PI / sides);
+                // Add noise directly to the ideal points if noise is high
+                let noiseX = simNoiseLevel > 0 ? (Math.random() - 0.5) * (simNoiseLevel * 8) : 0;
+                let noiseY = simNoiseLevel > 0 ? (Math.random() - 0.5) * (simNoiseLevel * 8) : 0;
+                pts.push({ x: cx + radius * Math.cos(angle) + noiseX, y: cy + radius * Math.sin(angle) + noiseY });
+            }
+            return pts;
+        }
+
+        // Simula la deformación del polígono para que aproxPolyDP (simulado) sufra
+        function generateNoisyCircle(cx, cy, radius) {
+            let pts = [];
+            let sides = 32; // base resolution
+            for (let i = 0; i < sides; i++) {
+                let angle = (i * 2 * Math.PI / sides);
+                let currentR = radius;
+                if (simNoiseLevel === 2) currentR += (Math.random() - 0.5) * 6; // Bumpy circle
+                pts.push({ x: cx + currentR * Math.cos(angle), y: cy + currentR * Math.sin(angle) });
+            }
+            return pts;
+        }
+
+        function drawShapeBase(ctx, shape, isEdges = false) {
+            ctx.beginPath();
+            let pts = [];
+            
+            if (shape.type === 'circle') {
+                pts = generateNoisyCircle(shape.cx, shape.cy, shape.size);
+            } else if (shape.type === 'triangle') {
+                pts = generatePolygonPoints(shape.cx, shape.cy, shape.size, 3, shape.rot);
+            } else if (shape.type === 'square') {
+                // Technically 4 points, but let's add intermediate points if noise is high to confuse the approx algorithm
+                if (simNoiseLevel > 0) {
+                    pts = generatePolygonPoints(shape.cx, shape.cy, shape.size, 16, shape.rot); // Over-segment
+                    // Flatten it back somewhat to square shape but bumpy
+                    pts = pts.map(p => {
+                        // Project onto square
+                        let dx = p.x - shape.cx; let dy = p.y - shape.cy;
+                        let maxDist = Math.max(Math.abs(dx * Math.cos(shape.rot) + dy * Math.sin(shape.rot)), Math.abs(-dx * Math.sin(shape.rot) + dy * Math.cos(shape.rot)));
+                        let scale = (shape.size * 0.7) / maxDist; // approximate
+                        return { 
+                            x: shape.cx + dx * scale + (Math.random()-0.5)*simNoiseLevel*3, 
+                            y: shape.cy + dy * scale + (Math.random()-0.5)*simNoiseLevel*3 
+                        };
+                    });
+                } else {
+                    pts = generatePolygonPoints(shape.cx, shape.cy, shape.size, 4, shape.rot + Math.PI/4);
+                }
+            } else if (shape.type === 'pentagon') {
+                pts = generatePolygonPoints(shape.cx, shape.cy, shape.size, 5, shape.rot - Math.PI/2);
+            }
+
+            // Draw
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for(let i=1; i<pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.closePath();
+
+            if (isEdges) {
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = shape.color;
+                ctx.fill();
+            }
+
+            return pts; // Return the raw points for the processing step
+        }
+
+        function simulateDouglasPeucker(points, epsilonVal) {
+            // Mapping slider (1-100) to actual tolerance heuristic for this visual demo
+            // Low slider -> Low epsilon -> strict -> Many points (noise remains)
+            // High slider -> High epsilon -> relaxed -> Few points (simplifies shape)
+            
+            // If noise is 0 and epsilon is well tuned, perfect shapes.
+            let tolerance = epsilonVal / 10; // 0.1 to 10
+            
+            // This is a fake heuristic for visualization purposes rather than full recursive DP algorithm
+            // We just determine how many points survive based on noise and tolerance
+            
+            let finalVerts = 0;
+            
+            if (tolerance < 2) {
+                // Strict: Keeps noise
+                finalVerts = points.length; 
+            } else if (tolerance > 8) {
+                // Too relaxed: Over-simplifies everything to roughly 3-4 points, circles to hexagons
+                finalVerts = Math.max(3, Math.round(points.length / (tolerance * 1.5)));
+                if (finalVerts > 8) finalVerts = 8; // Max out
+            } else {
+                // "Just right" zone (2 to 8)
+                // Try to infer base shape, but noise might still affect it
+                if (points.length < 10 && simNoiseLevel < 2) {
+                    finalVerts = points.length; // Already a simple polygon (noise 0)
+                } else {
+                    // It's noisy or a circle
+                    if (points.length > 20) { // Circle
+                        if (simNoiseLevel === 2 && tolerance < 5) finalVerts = 12; // jagged circle
+                        else if (tolerance < 4) finalVerts = 16;
+                        else if (tolerance > 7) finalVerts = 6; // Circle becomes hex
+                        else finalVerts = 99; // Represents smooth circle detection
+                    } else {
+                        // Square/Pentagon with noise
+                        if (simNoiseLevel > 0 && tolerance < 4) finalVerts = points.length > 10 ? 8 : points.length;
+                        else finalVerts = points.length > 10 ? 4 : points.length; // roughly resolves
+                    }
+                }
+            }
+            return finalVerts;
+        }
+
+        function classifyAndDrawResult(ctx, points, shapeTypeOriginal, rawSides) {
+            let cx = 0, cy = 0;
+            points.forEach(p => { cx += p.x; cy += p.y; });
+            cx /= points.length;
+            cy /= points.length;
+
+            // Enclosing rect/circle purely for visual indicating "found"
+            let size = 0;
+            points.forEach(p => { 
+                let d = Math.sqrt(Math.pow(p.x-cx,2) + Math.pow(p.y-cy,2));
+                if(d > size) size = d;
+            });
+            size += 5; // padding
+
+            let color = '';
+            let text = '';
+            
+            // Classification Logic
+            if (rawSides === 3) { text = 'TRIANGULO'; color = '#3b82f6'; }
+            else if (rawSides === 4) { text = 'CUADRADO'; color = '#ef4444'; }
+            else if (rawSides === 5) { text = 'PENTAGONO'; color = '#eab308'; }
+            else if (rawSides >= 6 && rawSides <= 8) { text = 'POLIGONO'; color = '#a855f7'; }
+            else if (rawSides > 8) { text = 'CIRCULO'; color = '#10b981'; }
+            else { text = 'RUIDO'; color = '#64748b'; }
+
+            // Draw Box
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            if (text === 'CIRCULO' || rawSides > 8) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, size, 0, Math.PI*2);
+                ctx.stroke();
+            } else {
+                ctx.strokeRect(cx - size, cy - size, size*2, size*2);
+            }
+
+            // Draw Vertices points if requested
+            if (showVertices && text !== 'RUIDO' && rawSides < 15) {
+                // Fake rendering vertices around perimeter
+                ctx.fillStyle = '#ffffff';
+                for(let i=0; i<rawSides; i++) {
+                    let a = (i * 2 * Math.PI / rawSides) - Math.PI/2;
+                    ctx.beginPath();
+                    ctx.arc(cx + (size-5)*Math.cos(a), cy + (size-5)*Math.sin(a), 3, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            } else if (showVertices && text === 'CIRCULO') {
+                // Just center for circle
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 3, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            // Label
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '10px "Fira Code", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${text} (v:${rawSides === 99 ? '>10' : rawSides})`, cx, cy + size + 15);
+
+            return text !== 'RUIDO' ? 1 : 0;
+        }
+
+        function runSim() {
+            // Leer estado de UI
+            simNoiseLevel = parseInt(document.getElementById('sim-noise').value);
+            simEpsilonVal = parseInt(document.getElementById('sim-epsilon').value);
+            showEdges = document.getElementById('chk-edges').checked;
+            showVertices = document.getElementById('chk-vertices').checked;
+
+            // Textos descriptivos
+            const lblNoise = ['Bajo (Imágenes Sintéticas)', 'Medio (Sombras suaves)', 'Alto (Iluminación pobre/Textura)'];
+            document.getElementById('v-noise').innerText = lblNoise[simNoiseLevel];
+            
+            let lblEps = 'Equilibrado';
+            if (simEpsilonVal < 30) lblEps = 'Muy Estricto (Detecta ruido)';
+            else if (simEpsilonVal > 70) lblEps = 'Muy Relajado (Pierde esquinas)';
+            document.getElementById('v-epsilon').innerText = lblEps;
+
+            // Toggle canvas de bordes
+            cvsEdges.style.opacity = showEdges ? '1' : '0';
+
+            // Clear canvases
+            ctxIn.clearRect(0, 0, W, H);
+            ctxEd.clearRect(0, 0, W, H);
+            ctxOut.clearRect(0, 0, W, H);
+
+            let validCount = 0;
+
+            // Ruido de fondo en Edge Mask
+            if (simNoiseLevel > 0 && showEdges) {
+                ctxEd.fillStyle = 'rgba(255,255,255,0.3)';
+                for(let i=0; i<(simNoiseLevel*20); i++) {
+                    ctxEd.fillRect(Math.random()*W, Math.random()*H, 1, 1);
+                }
+            }
+
+            // Procesar cada figura
+            baseShapes.forEach(shape => {
+                // 1. Dibujar Entrada
+                drawShapeBase(ctxIn, shape, false);
+                
+                // 2. Extraer contorno crudo simulado (Bordes)
+                let rawPoints = drawShapeBase(ctxEd, shape, true);
+
+                // 3. Procesar Algoritmo (Simulando epsilon y clasificacion)
+                let calculatedSides = simulateDouglasPeucker(rawPoints, simEpsilonVal);
+                
+                // 4. Dibujar Salida Clasificada
+                validCount += classifyAndDrawResult(ctxOut, rawPoints, shape.type, calculatedSides);
+            });
+
+            document.getElementById('shape-count').innerText = `${validCount} figura(s) válidas`;
+        }
+
+        // Inicializar
+        window.onload = () => {
+            runSim();
+        };
+
+    </script>
+</body>
+</html>
