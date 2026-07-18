@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica Interactiva: Esqueletización y MediaPipe - OpenCV & Python</title>
+    
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- MathJax para fórmulas matemáticas LaTeX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        input[type=checkbox] {
+            accent-color: #06b6d4; /* cyan-500 */
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col">
+
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="../index.html" class="text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-2 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Panel Principal
+                </a>
+                <div class="h-4 w-px bg-slate-700"></div>
+                <span class="text-cyan-400 font-bold uppercase tracking-widest text-xs">Visión Artificial</span>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-md">
+                <i data-lucide="book-open" class="w-4 h-4 text-purple-400"></i>
+                <span class="text-xs font-mono text-slate-300">Práctica_07.py</span>
+            </div>
+        </div>
+    </nav>
+
+    <header class="border-b border-slate-800 bg-slate-950 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-cyan-600/20 text-cyan-400 rounded-lg border border-cyan-500/30">
+                    <i data-lucide="accessibility" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        Guía de Visión Artificial <span class="text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono">MP-107</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Práctica de Laboratorio: Esqueletización y Tracking de Landmarks con MediaPipe</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchTab('teoria')" id="tab-teoria" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition">
+                    <i class="fa-solid fa-book mr-2"></i>Guía & Teoría
+                </button>
+                <button onclick="switchTab('simulador')" id="tab-simulador" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-gamepad mr-2"></i>Simulador de Modelos
+                </button>
+                <button onclick="switchTab('desafios')" id="tab-desafios" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-robot mr-2"></i>Desafío Brazo Robótico
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- NOTIFICACIÓN FLOTANTE -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toast-msg">¡Código copiado!</span>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 1: GUÍA & TEORÍA                   -->
+        <!-- ========================================== -->
+        <section id="sec-teoria" class="space-y-8">
+            <div class="bg-gradient-to-r from-cyan-900/30 via-slate-900 to-slate-900 border border-cyan-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-cyan-400 font-mono text-xs uppercase tracking-widest font-semibold">Modelos de Inferencia basados en Deep Learning</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Esqueletización con Google MediaPipe</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm md:text-base">
+                        Google MediaPipe es un ecosistema de herramientas de Machine Learning multiplataforma de código abierto, diseñado para procesar flujos de datos multimedia en tiempo real. A diferencia de las redes neuronales pesadas, los pipelines de MediaPipe están optimizados para correr en hardware modesto (como CPUs de computadoras convencionales o smartphones), logrando tasas superiores a los 30 FPS.
+                    </p>
+                </div>
+            </div>
+
+            <!-- DOS COLUMNAS: HANDS VS POSE -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Columna Hand Landmarker -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-cyan-400 text-3xl mb-4"><i class="fa-solid fa-hand"></i></div>
+                        <h3 class="text-xl font-bold text-white mb-3">1. Hand Landmark Detection (Manos)</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Esta solución detecta la palma de la mano y extrae un total de <strong>21 coordenadas clave (landmarks) en 3D</strong> por cada mano identificada en la imagen. La coordenada $Z$ estima la profundidad del punto respecto a la articulación de la muñeca.
+                        </p>
+                        <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-800 space-y-2 text-xs">
+                            <p class="font-bold text-slate-300"><i class="fa-solid fa-list-ol text-cyan-400 mr-1.5"></i> Estructura Topológica Clave:</p>
+                            <ul class="list-disc pl-4 text-slate-400 space-y-1">
+                                <li><strong>0:</strong> Muñeca (WRIST)</li>
+                                <li><strong>1-4:</strong> Pulgar (THUMB_CMC a THUMB_TIP)</li>
+                                <li><strong>5-8:</strong> Índice (INDEX_FINGER_MCP a INDEX_FINGER_TIP)</li>
+                                <li><strong>9-12:</strong> Medio (MIDDLE_FINGER_MCP a MIDDLE_FINGER_TIP)</li>
+                                <li><strong>13-16:</strong> Anular (RING_FINGER_MCP a RING_FINGER_TIP)</li>
+                                <li><strong>17-20:</strong> Meñique (PINKY_MCP a PINKY_TIP)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Pose Landmarker -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="text-purple-400 text-3xl mb-4"><i class="fa-solid fa-child"></i></div>
+                        <h3 class="text-xl font-bold text-white mb-3">2. Pose Landmark Detection (Cuerpo Completo)</h3>
+                        <p class="text-slate-400 text-sm mb-4 leading-relaxed">
+                            Este modelo infiere la pose tridimensional de un cuerpo completo a partir de una única imagen RGB, entregando un total de <strong>33 marcas anatómicas clave</strong>. Adicionalmente, provee un factor de visibilidad ($visibility$) que estima la probabilidad de que el punto no esté obstruido en el plano.
+                        </p>
+                        <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-800 space-y-2 text-xs">
+                            <p class="font-bold text-slate-300"><i class="fa-solid fa-list-ol text-purple-400 mr-1.5"></i> Puntos Clave de Control Corporal:</p>
+                            <ul class="list-disc pl-4 text-slate-400 space-y-1">
+                                <li><strong>0-10:</strong> Rasgos Faciales (Ojos, Orejas, Nariz, Boca)</li>
+                                <li><strong>11-12:</strong> Hombros Izquierdo (11) y Derecho (12)</li>
+                                <li><strong>13-14:</strong> Codos Izquierdo (13) y Derecho (14)</li>
+                                <li><strong>15-16:</strong> Muñecas Izquierda (15) y Derecha (16)</li>
+                                <li><strong>23-24:</strong> Caderas Izquierda (23) y Derecha (24)</li>
+                                <li><strong>25-28:</strong> Rodillas (25-26) y Tobillos (27-28)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESTRUCTURA PIPELINE PYTHON -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fa-brands fa-python text-yellow-500 text-xl"></i>
+                    <h3 class="text-lg font-semibold text-white">Pipeline Esencial de Programación con MediaPipe</h3>
+                </div>
+                <p class="text-sm text-slate-400 mb-4 leading-relaxed">
+                    Para interactuar con la cámara usando Python, creamos un ciclo infinito, transformamos la paleta de colores de BGR a RGB (ya que MediaPipe opera nativamente bajo esta norma), alimentamos la red y luego pintamos los puntos de referencia en la pantalla utilizando el módulo <code class="text-cyan-400">drawing_utils</code> de la librería.
+                </p>
+                <div class="relative group">
+                    <button onclick="copyCode('init-python-code')" class="absolute top-3 right-3 bg-slate-800 hover:bg-slate-700 text-xs px-2.5 py-1.5 rounded text-slate-300 border border-slate-700 transition flex items-center gap-1">
+                        <i class="fa-solid fa-copy"></i> Copiar Código Base
+                    </button>
+                    <pre id="init-python-code" class="text-xs md:text-sm bg-slate-900 p-4 rounded-xl border border-slate-800 text-slate-300 overflow-x-auto code-font">
+<span class="text-purple-400">import</span> cv2
+<span class="text-purple-400">import</span> mediapipe <span class="text-purple-400">as</span> mp
+
+<span class="text-slate-500"># 1. Instanciar utilidades de dibujo y modelos</span>
+mp_drawing = mp.solutions.drawing_utils
+mp_pose = mp.solutions.pose  <span class="text-slate-500"># Cambiar a mp.solutions.hands para manos</span>
+
+cap = cv2.VideoCapture(<span class="text-amber-400">0</span>)
+
+<span class="text-slate-500"># 2. Configurar el detector</span>
+<span class="text-purple-400">with</span> mp_pose.Pose(min_detection_confidence=<span class="text-amber-400">0.5</span>, min_tracking_confidence=<span class="text-amber-400">0.5</span>) <span class="text-purple-400">as</span> pose:
+    <span class="text-purple-400">while</span> cap.isOpened():
+        ret, frame = cap.read()
+        <span class="text-purple-400">if not</span> ret: <span class="text-purple-400">break</span>
+        
+        <span class="text-slate-500"># Transformar el frame de BGR a RGB</span>
+        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        <span class="text-slate-500"># Procesar imagen para detectar marcas</span>
+        results = pose.process(image_rgb)
+        
+        <span class="text-slate-500"># Dibujar esqueleto si hay detecciones</span>
+        <span class="text-purple-400">if</span> results.pose_landmarks:
+            mp_drawing.draw_landmarks(
+                frame, 
+                results.pose_landmarks, 
+                mp_pose.POSE_CONNECTIONS
+            )
+            
+        cv2.imshow(<span class="text-emerald-400">'MediaPipe Tracking'</span>, frame)
+        <span class="text-purple-400">if</span> cv2.waitKey(<span class="text-amber-400">10</span>) & <span class="text-amber-400">0xFF</span> == <span class="text-purple-400">ord</span>(<span class="text-emerald-400">'q'</span>):
+            <span class="text-purple-400">break</span>
+
+cap.release()
+cv2.destroyAllWindows()</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 2: SIMULADOR INTERACTIVO           -->
+        <!-- ========================================== -->
+        <section id="sec-simulador" class="hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- CONTROLES (IZQUIERDA) -->
+                <div class="lg:col-span-5 bg-slate-950 border border-slate-800 p-6 rounded-xl space-y-6 flex flex-col justify-between">
+                    <div>
+                        <div class="border-b border-slate-800 pb-4">
+                            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-cyan-400"></i> Selector de Modelo y Marcas
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">Elige un modelo anatómico, activa o desactiva marcas específicas en el esqueleto y observa la sintaxis de programación generada.</p>
+                        </div>
+
+                        <!-- Selector de Modelo -->
+                        <div class="space-y-2 mt-4">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Modelo Anatómico</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="btn-model-hands" onclick="setModel('hands')" class="py-2.5 px-4 text-xs font-bold rounded-lg transition border border-cyan-500 bg-cyan-600/20 text-cyan-400">
+                                    <i class="fa-solid fa-hand mr-1.5"></i> Detección de Manos
+                                </button>
+                                <button id="btn-model-pose" onclick="setModel('pose')" class="py-2.5 px-4 text-xs font-bold rounded-lg transition border border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800">
+                                    <i class="fa-solid fa-child mr-1.5"></i> Detección de Pose
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- CHECKBOXES DINÁMICOS -->
+                        <div class="space-y-3 mt-6">
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">Filtro de Landmarks Activos</label>
+                                <div class="flex gap-2">
+                                    <button onclick="toggleAllCheckboxes(true)" class="text-[10px] text-cyan-400 hover:underline">Activar Todos</button>
+                                    <span class="text-slate-600 text-[10px]">•</span>
+                                    <button onclick="toggleAllCheckboxes(false)" class="text-[10px] text-slate-400 hover:underline">Apagar Todos</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Contenedor dinámico de checkboxes -->
+                            <div id="checkboxes-container" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                                <!-- Se llena dinámicamente mediante JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTÓN DE RESET Y GUÍA DE COLOR -->
+                    <div class="pt-4 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
+                        <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-full bg-cyan-500 inline-block shadow-[0_0_8px_rgba(6,182,212,0.6)]"></span> Activo</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-full bg-slate-800 inline-block border border-slate-700"></span> Inactivo</span>
+                    </div>
+                </div>
+
+                <!-- CANVAS & CODIGO (DERECHA) -->
+                <div class="lg:col-span-7 flex flex-col gap-6">
+                    
+                    <!-- PANEL DE PREVISUALIZACIÓN -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 md:p-6 flex flex-col items-center">
+                        <div class="w-full flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider"><i class="fa-solid fa-desktop text-emerald-400 mr-2"></i>Esquema Topológico del Modelo</h3>
+                            <span id="canvas-badge" class="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1 rounded-full font-mono">Hands Model (21 pts)</span>
+                        </div>
+
+                        <!-- Canvas de Visualización -->
+                        <div class="w-full max-w-[360px] bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-center relative">
+                            <canvas id="skeleton-canvas" width="300" height="300" class="w-full max-w-[300px] aspect-square object-contain"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- EDITOR PYTHON GENERADO -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex-grow flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-code text-cyan-400"></i> Extracción de Puntos en Python
+                            </h3>
+                            <button onclick="copyCode('generated-code')" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-copy"></i> Copiar Código
+                            </button>
+                        </div>
+                        <textarea id="generated-code" readonly class="w-full text-xs md:text-sm bg-[#0d1117] p-4 rounded-xl border border-slate-700 text-cyan-300 overflow-y-auto code-font min-h-[160px] focus:outline-none resize-none" rows="12"></textarea>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- SECCIÓN 3: DESAFÍOS MECTRÓNICOS            -->
+        <!-- ========================================== -->
+        <section id="sec-desafios" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-violet-900/30 via-slate-900 to-slate-900 border border-violet-500/20 rounded-2xl p-6 md:p-8">
+                <div class="max-w-3xl">
+                    <span class="text-violet-400 font-mono text-xs uppercase tracking-widest font-semibold">Integración de Visión y Control de Motores</span>
+                    <h2 class="text-3xl font-extrabold text-white mt-2 mb-4">Caso Industrial: Manipulación de Brazo Robótico (Visual Servoing)</h2>
+                    <p class="text-slate-300 leading-relaxed text-sm">
+                        En las líneas de ensamble automatizado modernas, los cobots (robots colaborativos) interactúan y replican movimientos de operadores humanos en tiempo real. Esto disminuye la fatiga en tareas repetitivas o manipulación de materiales peligrosos.
+                    </p>
+                </div>
+            </div>
+
+            <!-- RETO DESCRIPCIÓN -->
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-6 md:p-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none text-9xl">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-rose-500/20 text-rose-400 p-2 rounded-lg">
+                            <i class="fa-solid fa-brain"></i>
+                        </div>
+                        <h4 class="text-2xl font-bold text-white">Planteamiento del Reto</h4>
+                    </div>
+                    
+                    <p class="text-slate-400 text-sm leading-relaxed max-w-4xl mb-6">
+                        Diseña e implementa un script en Python que capture el esqueleto completo de un operador por webcam, filtre y aísle <strong>exclusivamente el brazo derecho</strong> (hombro, codo y muñeca) mediante el modelo <code class="text-violet-400">mp.solutions.pose</code>. El algoritmo debe realizar el cálculo matemático del ángulo tridimensional en el codo del operador y comunicarlo vía puerto Serial a un microcontrolador (Arduino) para mover un servomotor del brazo mecánico en tiempo real.
+                    </p>
+
+                    <div class="grid md:grid-cols-2 gap-6 mt-4">
+                        <div class="space-y-4 text-sm text-slate-300 bg-slate-900 p-5 rounded-lg border border-slate-800 shadow-inner">
+                            <p class="font-bold text-slate-200 border-b border-slate-700 pb-2 text-rose-200"><i class="fa-solid fa-drafting-compass mr-2"></i> Lógica Vectorial para Cálculo de Ángulos:</p>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                Para obtener el ángulo de articulación del codo $B$, definimos los vectores entre el hombro $A(x_1, y_1)$, el codo $B(x_2, y_2)$ y la muñeca $C(x_3, y_3)$.
+                            </p>
+                            <!-- Fórmula matemática LaTeX -->
+                            <div class="bg-slate-950 p-3 rounded-lg text-center overflow-x-auto text-xs my-2">
+                                $$\vec{v_1} = (x_1 - x_2, \ y_1 - y_2)$$
+                                $$\vec{v_2} = (x_3 - x_2, \ y_3 - y_2)$$
+                                $$\theta = \arccos\left(\frac{\vec{v_1} \cdot \vec{v_2}}{\|\vec{v_1}\| \|\vec{v_2}\|}\right) \times \frac{180}{\pi}$$
+                            </div>
+                            <p class="text-[11px] text-slate-400">
+                                <strong>Pista de OpenCV:</strong> Una vez obtenido el ángulo en grados (0° a 180°), es recomendable mapearlo al rango de operación física de tu servomotor y limitar las fluctuaciones de ruido aplicando un promedio móvil o filtro de paso bajo por software.
+                            </p>
+                        </div>
+
+                        <div class="space-y-4 text-sm text-slate-300 bg-slate-900 p-5 rounded-lg border border-slate-800">
+                            <p class="font-bold text-slate-200 border-b border-slate-700 pb-2 text-cyan-200"><i class="fa-solid fa-list-check mr-2"></i> Requerimientos de la Entrega:</p>
+                            <ol class="list-decimal pl-5 space-y-3 text-slate-400 marker:text-cyan-500">
+                                <li><strong>Bucle de Cámara:</strong> El script debe encender tu webcam usando OpenCV y procesar los fotogramas dinámicamente con MediaPipe.</li>
+                                <li><strong>Aislamiento y Trazado:</strong> Mostrar en pantalla el video original pero dibujando <em>únicamente</em> las marcas del hombro derecho (12), codo derecho (14) y muñeca derecha (16). Debes trazar líneas rectas que los unan.</li>
+                                <li><strong>Cálculo Angular:</strong> Calcular de forma dinámica el ángulo del codo en base a la matemática vectorial y proyectar el valor textual en pantalla con <code class="text-slate-200">cv2.putText</code>.</li>
+                                <li><strong>Comunicación Serial:</strong> Transmitir la variable angular a través de PySerial al puerto donde esté conectado tu microcontrolador Arduino con una estructura de delimitador clara.</li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 bg-amber-900/20 border border-amber-500/30 p-4 rounded-lg flex items-start gap-3 text-amber-200/80 text-sm">
+                        <i class="fa-solid fa-circle-exclamation mt-1 text-amber-400"></i>
+                        <p><strong>Nota Académica:</strong> No se proporciona el código integrado para este reto. Deberás investigar cómo estructurar la biblioteca PySerial, el cálculo de arco coseno usando <code class="text-slate-300 font-mono text-xs">numpy.arctan2</code> o <code class="text-slate-300 font-mono text-xs">numpy.arccos</code>, y escribir el bosquejo (.ino) que lea los comandos desde el búfer del puerto serie de la placa de desarrollo.</p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 bg-slate-950 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p class="text-xs text-slate-400">Universidad Politécnica - Área de Mecatrónica y Visión por Computadora</p>
+            <p class="text-[10px] text-slate-600">Material interactivo para esqueleto y control mecatrónico. Google MediaPipe + JS Engine.</p>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE CONTROL DEL SIMULADOR & RENDERING -->
+    <script>
+        // Inicialización de Lucide Icons
+        lucide.createIcons();
+
+        // Variables de Estado del Simulador
+        let activeModel = 'hands'; // 'hands' o 'pose'
+        let landmarksState = {}; // Guarda estado check/uncheck de cada landmark index
+
+        // Elementos UI
+        const canvas = document.getElementById('skeleton-canvas');
+        const ctx = canvas.getContext('2d');
+        const codeEditor = document.getElementById('generated-code');
+        const cbContainer = document.getElementById('checkboxes-container');
+        const canvasBadge = document.getElementById('canvas-badge');
+
+        // Configuración de Datos de los Modelos Anatómicos
+        const modelData = {
+            hands: {
+                badge: 'Hands Model (21 pts)',
+                connections: [
+                    [0, 1], [1, 2], [2, 3], [3, 4], // Pulgar
+                    [0, 5], [5, 6], [6, 7], [7, 8], // Índice
+                    [0, 9], [9, 10], [10, 11], [11, 12], // Medio
+                    [0, 13], [13, 14], [14, 15], [15, 16], // Anular
+                    [0, 17], [17, 18], [18, 19], [19, 20]  // Meñique
+                ],
+                points: [
+                    { id: 0, label: "WRIST (Muñeca)", x: 150, y: 270 },
+                    { id: 1, label: "THUMB_CMC", x: 100, y: 240 },
+                    { id: 2, label: "THUMB_MCP", x: 70, y: 210 },
+                    { id: 3, label: "THUMB_IP", x: 55, y: 175 },
+                    { id: 4, label: "THUMB_TIP", x: 45, y: 145 },
+                    { id: 5, label: "INDEX_MCP", x: 105, y: 160 },
+                    { id: 6, label: "INDEX_PIP", x: 95, y: 110 },
+                    { id: 7, label: "INDEX_DIP", x: 90, y: 80 },
+                    { id: 8, label: "INDEX_TIP", x: 85, y: 50 },
+                    { id: 9, label: "MIDDLE_MCP", x: 140, y: 155 },
+                    { id: 10, label: "MIDDLE_PIP", x: 135, y: 100 },
+                    { id: 11, label: "MIDDLE_DIP", x: 130, y: 65 },
+                    { id: 12, label: "MIDDLE_TIP", x: 125, y: 35 },
+                    { id: 13, label: "RING_MCP", x: 175, y: 165 },
+                    { id: 14, label: "RING_PIP", x: 178, y: 115 },
+                    { id: 15, label: "RING_DIP", x: 180, y: 80 },
+                    { id: 16, label: "RING_TIP", x: 182, y: 50 },
+                    { id: 17, label: "PINKY_MCP", x: 210, y: 185 },
+                    { id: 18, label: "PINKY_PIP", x: 222, y: 145 },
+                    { id: 19, label: "PINKY_DIP", x: 230, y: 115 },
+                    { id: 20, label: "PINKY_TIP", x: 238, y: 85 }
+                ]
+            },
+            pose: {
+                badge: 'Pose Model (33 pts - Core)',
+                connections: [
+                    [11, 12], [11, 13], [13, 15], // Brazo izquierdo
+                    [12, 14], [14, 16],           // Brazo derecho
+                    [11, 23], [12, 24], [23, 24], // Torso
+                    [23, 25], [25, 27],           // Pierna izquierda
+                    [24, 26], [26, 28]            // Pierna derecha
+                ],
+                // Simplificado para mejor visibilidad en renderizado 2D
+                points: [
+                    { id: 0, label: "NOSE (Nariz)", x: 150, y: 40 },
+                    { id: 11, label: "L_SHOULDER (Hombro I)", x: 110, y: 90 },
+                    { id: 12, label: "R_SHOULDER (Hombro D)", x: 190, y: 90 },
+                    { id: 13, label: "L_ELBOW (Codo I)", x: 80, y: 140 },
+                    { id: 14, label: "R_ELBOW (Codo D)", x: 220, y: 140 },
+                    { id: 15, label: "L_WRIST (Muñeca I)", x: 60, y: 190 },
+                    { id: 16, label: "R_WRIST (Muñeca D)", x: 240, y: 190 },
+                    { id: 23, label: "L_HIP (Cadera I)", x: 120, y: 190 },
+                    { id: 24, label: "R_HIP (Cadera D)", x: 180, y: 190 },
+                    { id: 25, label: "L_KNEE (Rodilla I)", x: 110, y: 240 },
+                    { id: 26, label: "R_KNEE (Rodilla D)", x: 190, y: 240 },
+                    { id: 27, label: "L_ANKLE (Tobillo I)", x: 105, y: 285 },
+                    { id: 28, label: "R_ANKLE (Tobillo D)", x: 195, y: 285 }
+                ]
+            }
+        };
+
+        // Cambiar pestañas de navegación superior
+        function switchTab(tabName) {
+            document.querySelectorAll('section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            });
+
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition shadow-lg shadow-cyan-900/20";
+            }
+
+            if (tabName === 'simulador') {
+                renderAll();
+            }
+        }
+
+        // Configurar Modelo Anatómico Activo
+        function setModel(modelName) {
+            activeModel = modelName;
+            
+            // Actualizar botones UI
+            const btnHands = document.getElementById('btn-model-hands');
+            const btnPose = document.getElementById('btn-model-pose');
+            
+            if (modelName === 'hands') {
+                btnHands.className = "py-2.5 px-4 text-xs font-bold rounded-lg transition border border-cyan-500 bg-cyan-600/20 text-cyan-400";
+                btnPose.className = "py-2.5 px-4 text-xs font-bold rounded-lg transition border border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800";
+            } else {
+                btnPose.className = "py-2.5 px-4 text-xs font-bold rounded-lg transition border border-cyan-500 bg-cyan-600/20 text-cyan-400";
+                btnHands.className = "py-2.5 px-4 text-xs font-bold rounded-lg transition border border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800";
+            }
+
+            canvasBadge.innerText = modelData[modelName].badge;
+
+            // Inicializar estado de landmarks (todos activos al inicio)
+            landmarksState = {};
+            modelData[modelName].points.forEach(pt => {
+                landmarksState[pt.id] = true;
+            });
+
+            buildCheckboxes();
+            renderAll();
+        }
+
+        // Construir listado de Checkboxes de acuerdo al modelo
+        function buildCheckboxes() {
+            cbContainer.innerHTML = '';
+            const pts = modelData[activeModel].points;
+            
+            pts.forEach(pt => {
+                const div = document.createElement('div');
+                div.className = "flex items-center gap-2 bg-slate-900/40 p-2 border border-slate-800 rounded-lg hover:border-slate-700 transition";
+                
+                div.innerHTML = `
+                    <input type="checkbox" id="chk-${pt.id}" ${landmarksState[pt.id] ? 'checked' : ''} onchange="toggleLandmark(${pt.id})" class="w-4 h-4 text-cyan-500 bg-slate-900 border-slate-700 rounded focus:ring-cyan-500">
+                    <label for="chk-${pt.id}" class="text-xs text-slate-300 font-mono cursor-pointer select-none">${pt.id}: ${pt.label.split(' ')[0]}</label>
+                `;
+                cbContainer.appendChild(div);
+            });
+        }
+
+        // Toggle para un Landmark Individual
+        function toggleLandmark(id) {
+            landmarksState[id] = document.getElementById(`chk-${id}`).checked;
+            renderAll();
+        }
+
+        // Activar o desactivar masivamente
+        function toggleAllCheckboxes(state) {
+            const pts = modelData[activeModel].points;
+            pts.forEach(pt => {
+                landmarksState[pt.id] = state;
+                const chk = document.getElementById(`chk-${pt.id}`);
+                if (chk) chk.checked = state;
+            });
+            renderAll();
+        }
+
+        // Dibujar el Esqueleto en Canvas y Generar Código de forma Dinámica
+        function renderAll() {
+            // Limpiar Lienzo
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const model = modelData[activeModel];
+
+            // 1. Dibujar Conexiones
+            ctx.strokeStyle = "rgba(51, 65, 85, 0.4)"; // Color por defecto (Gris oscuro)
+            ctx.lineWidth = 2.5;
+
+            model.connections.forEach(conn => {
+                const ptA = model.points.find(p => p.id === conn[0]);
+                const ptB = model.points.find(p => p.id === conn[1]);
+                
+                // Solo dibujar si ambos puntos existen en nuestro dataset
+                if (ptA && ptB) {
+                    ctx.beginPath();
+                    ctx.moveTo(ptA.x, ptA.y);
+                    ctx.lineTo(ptB.x, ptB.y);
+                    
+                    // Colorear en Cyan si ambos extremos están seleccionados por el alumno
+                    if (landmarksState[ptA.id] && landmarksState[ptB.id]) {
+                        ctx.strokeStyle = "rgba(6, 182, 212, 0.7)"; // Cyan
+                    } else {
+                        ctx.strokeStyle = "rgba(30, 41, 59, 0.8)"; // Gris apagado
+                    }
+                    ctx.stroke();
+                }
+            });
+
+            // 2. Dibujar Puntos de Referencia
+            model.points.forEach(pt => {
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+                
+                if (landmarksState[pt.id]) {
+                    ctx.fillStyle = "#06b6d4"; // Cyan-500
+                    ctx.shadowColor = "rgba(6, 182, 212, 0.5)";
+                    ctx.shadowBlur = 8;
+                } else {
+                    ctx.fillStyle = "#1e293b"; // Slate-800
+                    ctx.shadowBlur = 0;
+                }
+                ctx.fill();
+                
+                // Dibujar ID número del Landmark
+                ctx.fillStyle = "#94a3b8"; // Slate-400
+                ctx.font = "9px 'Fira Code', monospace";
+                ctx.fillText(pt.id, pt.x + 9, pt.y + 3);
+            });
+
+            // 3. Actualizar Bloque de Código Python
+            generatePythonCode();
+        }
+
+        // Generación dinámica de código en base a checkboxes de la UI
+        function generatePythonCode() {
+            const activeIds = Object.keys(landmarksState).filter(key => landmarksState[key]);
+            
+            let code = `import cv2\nimport mediapipe as mp\n\n`;
+            code += `mp_drawing = mp.solutions.drawing_utils\n`;
+            
+            if (activeModel === 'hands') {
+                code += `mp_hands = mp.solutions.hands\n\n`;
+                code += `# Procesamiento de landmarks de manos...\n`;
+                code += `with mp_hands.Hands(max_num_hands=2) as hands:\n`;
+                code += `    results = hands.process(image_rgb)\n`;
+                code += `    if results.multi_hand_landmarks:\n`;
+                code += `        for hand_landmarks in results.multi_hand_landmarks:\n`;
+                code += `            # Filtrado de marcas seleccionadas en el simulador:\n`;
+                
+                if (activeIds.length === 0) {
+                    code += `            # Ninguna marca activa en simulador\n`;
+                    code += `            pass\n`;
+                } else {
+                    code += `            for idx, landmark in enumerate(hand_landmarks.landmark):\n`;
+                    code += `                if idx in [${activeIds.join(', ')}]:\n`;
+                    code += `                    # Coordenadas relativas en píxeles:\n`;
+                    code += `                    h, w, c = frame.shape\n`;
+                    code += `                    cx, cy = int(landmark.x * w), int(landmark.y * h)\n`;
+                    code += `                    cv2.circle(frame, (cx, cy), 6, (255, 0, 0), -1)\n`;
+                }
+            } else {
+                code += `mp_pose = mp.solutions.pose\n\n`;
+                code += `# Procesamiento de marcas de Pose anatómica...\n`;
+                code += `with mp_pose.Pose() as pose:\n`;
+                code += `    results = pose.process(image_rgb)\n`;
+                code += `    if results.pose_landmarks:\n`;
+                code += `        # Extrayendo puntos de control anatómicos:\n`;
+                
+                if (activeIds.length === 0) {
+                    code += `        # Ninguna marca seleccionada en simulador\n`;
+                    code += `        pass\n`;
+                } else {
+                    activeIds.forEach(id => {
+                        const ptLabel = modelData.pose.points.find(p => p.id == id).label.split(' ')[0];
+                        code += `        # ${ptLabel}\n`;
+                        code += `        pt_${id} = results.pose_landmarks.landmark[${id}]\n`;
+                        code += `        if pt_${id}.visibility > 0.5:\n`;
+                        code += `            cx = int(pt_${id}.x * w)\n`;
+                        code += `            cy = int(pt_${id}.y * h)\n\n`;
+                    });
+                }
+            }
+            
+            codeEditor.value = code;
+        }
+
+        // Copiar Código al Portapapeles
+        function copyCode(elementId) {
+            const el = document.getElementById(elementId);
+            const text = el.tagName === 'TEXTAREA' ? el.value : el.innerText;
+            
+            navigator.clipboard.writeText(text).then(() => showToast('¡Código copiado!')).catch(err => {
+                // Fallback clásico
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                showToast('¡Código copiado!');
+                document.body.removeChild(textArea);
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            toast.className = toast.className.replace('translate-y-20 opacity-0', 'translate-y-0 opacity-100');
+            setTimeout(() => {
+                toast.className = toast.className.replace('translate-y-0 opacity-100', 'translate-y-20 opacity-0');
+            }, 3000);
+        }
+
+        // Inicializar Simulador
+        window.onload = () => {
+            setModel('hands');
+        };
+
+    </script>
+</body>
+</html>
